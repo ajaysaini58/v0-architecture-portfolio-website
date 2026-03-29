@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { notFound } from 'next/navigation'
+import { useParams } from 'next/navigation'
 import { ArrowLeft, Heart, MessageCircle, Share2, Calendar, User } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -13,16 +13,23 @@ import { Navigation } from '@/components/navigation'
 import { Footer } from '@/components/footer'
 import { blogPosts } from '@/lib/data'
 
-interface BlogDetailPageProps {
-  params: Promise<{ id: string }>
-}
-
-export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
-  const { id } = await params
-  const post = blogPosts.find(p => p.id === id)
+export default function BlogDetailPage() {
+  const params = useParams()
+  const id = params.id as string
+  
+  const post = blogPosts.find((p) => p.id === id)
 
   if (!post) {
-    notFound()
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-serif mb-2">Post not found</h1>
+          <Button asChild>
+            <Link href="/blog">Back to Blog</Link>
+          </Button>
+        </div>
+      </div>
+    )
   }
 
   return (
