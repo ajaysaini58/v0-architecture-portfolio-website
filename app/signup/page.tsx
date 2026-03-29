@@ -9,6 +9,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 
+import { ArrowLeft } from "lucide-react"
+
 export default function SignupPage() {
   const router = useRouter()
   const [showPassword, setShowPassword] = useState(false)
@@ -51,10 +53,21 @@ export default function SignupPage() {
       {/* Left Side - Form */}
       <div className="flex-1 flex items-center justify-center p-8 bg-background">
         <div className="w-full max-w-md space-y-8">
+          <div>
+            <Link href="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-4">
+              <ArrowLeft className="h-4 w-4" />
+              Back
+            </Link>
+          </div>
           <div className="text-center">
             <Link href="/" className="inline-flex items-center gap-2 mb-8">
-              <Building2 className="h-8 w-8 text-primary" />
-              <span className="font-serif text-2xl tracking-tight">Architure</span>
+              <div className="h-10 w-10 rounded-lg bg-primary flex items-center justify-center">
+                <span className="font-serif font-bold text-primary-foreground text-sm">D</span>
+              </div>
+              <div className="flex flex-col">
+                <span className="font-serif text-lg tracking-tight font-bold">DByARCH</span>
+                <span className="text-xs text-muted-foreground">Design By Architect</span>
+              </div>
             </Link>
             <h1 className="font-serif text-3xl text-foreground">
               {step === 1 ? "Create your account" : "Complete your profile"}
