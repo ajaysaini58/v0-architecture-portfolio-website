@@ -13,8 +13,14 @@ export function Navigation() {
     <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          <Link href="/" className="font-serif text-2xl tracking-tight text-foreground">
-            Architure
+          <Link href="/" className="flex items-center gap-2">
+            <div className="h-10 w-10 rounded-lg bg-primary flex items-center justify-center">
+              <span className="font-serif font-bold text-primary-foreground text-sm">D</span>
+            </div>
+            <div className="hidden sm:flex flex-col">
+              <span className="font-serif text-lg tracking-tight text-foreground leading-none">DByARCH</span>
+              <span className="text-xs text-muted-foreground">Design By Architect</span>
+            </div>
           </Link>
 
           {/* Desktop Navigation */}
@@ -31,8 +37,14 @@ export function Navigation() {
             <Link href="/post-project" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
               Post a Project
             </Link>
+            <Link href="/blog" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              Blog
+            </Link>
             <Link href="/contact" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
               Contact
+            </Link>
+            <Link href="/admin" className="text-sm text-muted-foreground hover:text-primary transition-colors font-medium">
+              Admin
             </Link>
           </div>
 
@@ -92,11 +104,25 @@ export function Navigation() {
               Post a Project
             </Link>
             <Link
+              href="/blog"
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              onClick={() => setIsOpen(false)}
+            >
+              Blog
+            </Link>
+            <Link
               href="/contact"
               className="text-sm text-muted-foreground hover:text-foreground transition-colors"
               onClick={() => setIsOpen(false)}
             >
               Contact
+            </Link>
+            <Link
+              href="/admin"
+              className="text-sm text-muted-foreground hover:text-primary transition-colors font-medium"
+              onClick={() => setIsOpen(false)}
+            >
+              Admin
             </Link>
             <div className="flex gap-4 pt-4 border-t border-border">
               <Button variant="ghost" size="sm" asChild className="flex-1">

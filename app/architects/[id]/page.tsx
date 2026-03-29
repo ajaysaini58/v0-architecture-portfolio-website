@@ -1,7 +1,7 @@
 import Image from "next/image"
 import Link from "next/link"
 import { notFound } from "next/navigation"
-import { MapPin, Star, Briefcase, Mail, Phone, Calendar, ArrowLeft, ExternalLink } from "lucide-react"
+import { MapPin, Star, Briefcase, Mail, Phone, Calendar, ArrowLeft, ExternalLink, DollarSign, Zap, Instagram, Linkedin, Globe, Twitter } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -96,7 +96,7 @@ export default async function ArchitectPage({ params }: ArchitectPageProps) {
                 <Button size="lg" asChild>
                   <Link href={`/contact?architect=${architect.id}`}>
                     <Mail className="h-4 w-4 mr-2" />
-                    Contact
+                    Connect
                   </Link>
                 </Button>
                 <Button size="lg" variant="outline" asChild>
@@ -110,6 +110,74 @@ export default async function ArchitectPage({ params }: ArchitectPageProps) {
           </div>
         </div>
       </section>
+
+      {/* Pricing & Social */}
+      <section className="py-8 border-t border-border">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid sm:grid-cols-2 gap-6">
+            {/* Pricing Card */}
+            <div className="bg-card rounded-xl border border-border p-6">
+              <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
+                <DollarSign className="h-5 w-5" />
+                Pricing & Availability
+              </h3>
+              <div className="space-y-3">
+                <div>
+                  <p className="text-sm text-muted-foreground">Hourly Rate</p>
+                  <p className="text-2xl font-serif text-foreground">${architect.hourlyRate}/hour</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Minimum Project Budget</p>
+                  <p className="text-2xl font-serif text-foreground">${architect.minimumProjectBudget.toLocaleString()}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Social Media Card */}
+            <div className="bg-card rounded-xl border border-border p-6">
+              <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
+                <Zap className="h-5 w-5" />
+                Connect on Social
+              </h3>
+              <div className="flex flex-wrap gap-3">
+                {architect.social.instagram && (
+                  <Button size="sm" variant="outline" asChild>
+                    <a href={architect.social.instagram} target="_blank" rel="noopener noreferrer">
+                      <Instagram className="h-4 w-4 mr-2" />
+                      Instagram
+                    </a>
+                  </Button>
+                )}
+                {architect.social.linkedin && (
+                  <Button size="sm" variant="outline" asChild>
+                    <a href={architect.social.linkedin} target="_blank" rel="noopener noreferrer">
+                      <Linkedin className="h-4 w-4 mr-2" />
+                      LinkedIn
+                    </a>
+                  </Button>
+                )}
+                {architect.social.twitter && (
+                  <Button size="sm" variant="outline" asChild>
+                    <a href={architect.social.twitter} target="_blank" rel="noopener noreferrer">
+                      <Twitter className="h-4 w-4 mr-2" />
+                      Twitter
+                    </a>
+                  </Button>
+                )}
+                {architect.social.website && (
+                  <Button size="sm" variant="outline" asChild>
+                    <a href={architect.social.website} target="_blank" rel="noopener noreferrer">
+                      <Globe className="h-4 w-4 mr-2" />
+                      Website
+                    </a>
+                  </Button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
 
       {/* Main Content */}
       <section className="py-12">
