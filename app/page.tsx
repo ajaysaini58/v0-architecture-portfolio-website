@@ -26,20 +26,20 @@ export default function HomePage() {
             className="object-cover"
             priority
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-foreground/90 via-foreground/70 to-foreground/40" />
+          <div className="absolute inset-0 bg-gradient-to-r from-background/95 via-background/80 to-background/30" />
         </div>
 
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
           <div className="max-w-2xl">
-            <p className="text-primary-foreground/80 text-sm uppercase tracking-widest mb-4">
+            <p className="text-foreground/80 text-sm uppercase tracking-widest mb-4">
               Architecture Platform
             </p>
-            <h1 className="font-serif text-5xl sm:text-6xl lg:text-7xl text-primary-foreground leading-[1.1] text-balance">
+            <h1 className="font-serif text-5xl sm:text-6xl lg:text-7xl text-foreground leading-[1.1] text-balance">
               Where Vision Meets
               <br />
-              <span className="text-primary text-glow">Extraordinary Design</span>
+              <span className="text-primary font-semibold">Extraordinary Design</span>
             </h1>
-            <p className="mt-6 text-lg text-primary-foreground/80 leading-relaxed max-w-xl">
+            <p className="mt-6 text-lg text-foreground/80 leading-relaxed max-w-xl">
               Connect with world-class architects who transform spaces into living art. 
               Browse portfolios, post your project, and bring your architectural vision to life.
             </p>
@@ -51,7 +51,7 @@ export default function HomePage() {
                   <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </Link>
               </Button>
-              <Button size="lg" variant="outline" asChild className="bg-transparent text-primary-foreground border-primary-foreground/30 hover:bg-primary-foreground/10">
+              <Button size="lg" variant="outline" asChild className="bg-background/50 hover:bg-background/80">
                 <Link href="/post-project">
                   Post Your Project
                 </Link>
@@ -61,16 +61,16 @@ export default function HomePage() {
             {/* Stats */}
             <div className="mt-16 grid grid-cols-3 gap-8">
               <div>
-                <p className="font-serif text-3xl text-primary-foreground">500+</p>
-                <p className="text-sm text-primary-foreground/60 mt-1">Architects</p>
+                <p className="font-serif text-3xl text-foreground">500+</p>
+                <p className="text-sm text-foreground/60 mt-1">Architects</p>
               </div>
               <div>
-                <p className="font-serif text-3xl text-primary-foreground">2,500+</p>
-                <p className="text-sm text-primary-foreground/60 mt-1">Projects</p>
+                <p className="font-serif text-3xl text-foreground">2,500+</p>
+                <p className="text-sm text-foreground/60 mt-1">Projects</p>
               </div>
               <div>
-                <p className="font-serif text-3xl text-primary-foreground">98%</p>
-                <p className="text-sm text-primary-foreground/60 mt-1">Satisfaction</p>
+                <p className="font-serif text-3xl text-foreground">98%</p>
+                <p className="text-sm text-foreground/60 mt-1">Satisfaction</p>
               </div>
             </div>
           </div>
