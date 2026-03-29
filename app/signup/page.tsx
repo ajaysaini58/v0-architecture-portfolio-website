@@ -39,7 +39,7 @@ export default function SignupPage() {
     await new Promise((resolve) => setTimeout(resolve, 1500))
     
     setIsLoading(false)
-    router.push("/dashboard")
+    router.push("/projects")
   }
 
   const passwordRequirements = [

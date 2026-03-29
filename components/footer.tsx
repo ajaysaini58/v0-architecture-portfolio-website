@@ -45,7 +45,7 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/dashboard" className="text-sm text-background/70 hover:text-background transition-colors">
+                <Link href="/projects" className="text-sm text-background/70 hover:text-background transition-colors">
                   Client Dashboard
                 </Link>
               </li>
