@@ -27,7 +27,7 @@ export default function LoginPage() {
     await new Promise((resolve) => setTimeout(resolve, 1500))
     
     setIsLoading(false)
-    router.push("/dashboard")
+    router.push("/projects")
   }
 
   return (

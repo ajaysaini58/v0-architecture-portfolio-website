@@ -108,7 +108,7 @@ export default function PostProjectPage() {
       <section className="pt-24 pb-8 bg-secondary/50">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
           <Link
-            href="/dashboard"
+            href="/projects"
             className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-6"
           >
             <ArrowLeft className="h-4 w-4" />
