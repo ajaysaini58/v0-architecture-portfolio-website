@@ -33,8 +33,8 @@ export function Navigation() {
             <Link href="/portfolio" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
               Portfolios
             </Link>
-            <Link href="/dashboard" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-              Dashboard
+            <Link href="/projects" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              Projects
             </Link>
             <Link href="/post-project" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
               Post a Project
@@ -55,7 +55,7 @@ export function Navigation() {
           <div className="hidden md:flex items-center gap-4">
             {!isLoading && user ? (
               <Button variant="ghost" size="sm" asChild>
-                <Link href="/dashboard">Dashboard</Link>
+                <Link href="/projects">My Projects</Link>
               </Button>
             ) : (
               <>
@@ -102,11 +102,11 @@ export function Navigation() {
               Portfolios
             </Link>
             <Link
-              href="/dashboard"
+              href="/projects"
               className="text-sm text-muted-foreground hover:text-foreground transition-colors"
               onClick={() => setIsOpen(false)}
             >
-              Dashboard
+              Projects
             </Link>
             <Link
               href="/post-project"
@@ -141,7 +141,7 @@ export function Navigation() {
             <div className="flex gap-4 pt-4 border-t border-border">
               {!isLoading && user ? (
                   <Button variant="ghost" size="sm" asChild className="flex-1">
-                    <Link href="/dashboard" onClick={() => setIsOpen(false)}>Dashboard</Link>
+                    <Link href="/projects" onClick={() => setIsOpen(false)}>My Projects</Link>
                   </Button>
                 ) : (
                 <>
