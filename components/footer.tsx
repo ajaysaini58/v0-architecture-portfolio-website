@@ -49,6 +49,11 @@ export function Footer() {
                   Client Dashboard
                 </Link>
               </li>
+              <li>
+                <Link href="/vacancies" className="text-sm text-background/70 hover:text-background transition-colors">
+                  Job Vacancies
+                </Link>
+              </li>
             </ul>
           </div>
 

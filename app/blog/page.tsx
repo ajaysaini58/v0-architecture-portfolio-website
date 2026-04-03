@@ -10,8 +10,10 @@ import { Badge } from '@/components/ui/badge'
 import { Navigation } from '@/components/navigation'
 import { Footer } from '@/components/footer'
 import { blogPosts } from '@/lib/data'
+import { useAuth } from '@/components/auth-provider'
 
 export default function BlogPage() {
+  const { user } = useAuth()
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
 
@@ -52,7 +54,7 @@ export default function BlogPage() {
               />
             </div>
             <Button asChild>
-              <Link href="/blog/write">
+              <Link href={user ? "/blog/write" : "/login?redirect=/blog/write"}>
                 <Plus className="h-4 w-4 mr-2" />
                 Write Article
               </Link>

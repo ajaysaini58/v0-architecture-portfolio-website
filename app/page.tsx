@@ -37,7 +37,7 @@ export default function HomePage() {
             <h1 className="font-serif text-5xl sm:text-6xl lg:text-7xl text-foreground leading-[1.1] text-balance">
               Where Vision Meets
               <br />
-              <span className="text-primary font-semibold">Extraordinary Design</span>
+              <span className="text-amber-400 font-semibold">Extraordinary Design</span>
             </h1>
             <p className="mt-6 text-lg text-foreground/80 leading-relaxed max-w-xl">
               Connect with world-class architects who transform spaces into living art. 

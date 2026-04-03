@@ -520,3 +520,65 @@ export async function incrementBlogLikes(supabase: any, postId: string) {
   if (error) throw error
   return data
 }
+
+// ============================================================================
+// VACANCY QUERIES
+// ============================================================================
+
+export async function getVacancies(supabaseClient: any, status = 'approved') {
+  const { data, error } = await supabaseClient
+    .from('vacancies')
+    .select('*')
+    .eq('status', status)
+    .order('created_at', { ascending: false })
+
+  if (error) throw error
+  return data
+}
+
+export async function getVacancyById(supabaseClient: any, id: string) {
+  const { data, error } = await supabaseClient
+    .from('vacancies')
+    .select('*')
+    .eq('id', id)
+    .single()
+
+  if (error) throw error
+  return data
+}
+
+export async function createVacancy(supabaseClient: any, vacancy: {
+  user_id: string
+  title: string
+  company: string
+  location?: string
+  salary_min?: number
+  salary_max?: number
+  job_type: string
+  description: string
+  requirements?: string
+  apply_url?: string
+  apply_email?: string
+}) {
+  const { data, error } = await supabaseClient
+    .from('vacancies')
+    .insert({ ...vacancy, status: 'approved' })
+    .select()
+    .single()
+
+  if (error) throw error
+  return data
+}
+
+export async function updateVacancyStatus(supabaseClient: any, id: string, status: string) {
+  const { data, error } = await supabaseClient
+    .from('vacancies')
+    .update({ status })
+    .eq('id', id)
+    .select()
+    .single()
+
+  if (error) throw error
+  return data
+}
+

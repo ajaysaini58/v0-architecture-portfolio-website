@@ -42,6 +42,9 @@ export function Navigation() {
             <Link href="/blog" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
               Blog
             </Link>
+            <Link href="/vacancies" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              Vacancies
+            </Link>
             <Link href="/contact" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
               Contact
             </Link>
@@ -121,6 +124,13 @@ export function Navigation() {
               onClick={() => setIsOpen(false)}
             >
               Blog
+            </Link>
+            <Link
+              href="/vacancies"
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              onClick={() => setIsOpen(false)}
+            >
+              Vacancies
             </Link>
             <Link
               href="/contact"
