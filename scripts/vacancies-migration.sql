@@ -41,7 +41,15 @@ CREATE POLICY "Users can update own vacancies" ON vacancies
 
 -- Admin can manage all (using service role key, bypasses RLS)
 
--- Timestamp trigger
+-- Timestamp trigger function (create if not exists)
+CREATE OR REPLACE FUNCTION update_timestamp()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
 CREATE TRIGGER update_vacancies_timestamp BEFORE UPDATE ON vacancies
   FOR EACH ROW EXECUTE FUNCTION update_timestamp();
 
