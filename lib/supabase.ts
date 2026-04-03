@@ -9,6 +9,8 @@ export const createSupabaseClient = () => {
   )
 }
 
+export const supabase = createSupabaseClient()
+
 // ============================================================================
 // ARCHITECT QUERIES
 // ============================================================================

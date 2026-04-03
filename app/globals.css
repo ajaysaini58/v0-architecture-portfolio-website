@@ -92,6 +92,8 @@ body {
 @theme {
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --font-serif: var(--font-playfair), ui-serif, Georgia, serif;
+  --color-border: var(--border);
+  --color-primary: var(--primary);
 }
 
 @layer base {
