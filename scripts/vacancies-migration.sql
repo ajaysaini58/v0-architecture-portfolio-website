@@ -53,24 +53,8 @@ $$ LANGUAGE plpgsql;
 CREATE TRIGGER update_vacancies_timestamp BEFORE UPDATE ON vacancies
   FOR EACH ROW EXECUTE FUNCTION update_timestamp();
 
--- ============================================================================
--- FIX: Make project_bids publicly readable
--- ============================================================================
-
--- Drop existing restrictive policy
-DROP POLICY IF EXISTS "Users can see own project bids" ON project_bids;
-
--- Allow anyone to view open project bids
-CREATE POLICY "Anyone can view project bids" ON project_bids
-  FOR SELECT USING (true);
-
--- Authenticated users can create project bids
-CREATE POLICY "Authenticated users can create project bids" ON project_bids
-  FOR INSERT WITH CHECK (auth.uid() IS NOT NULL);
-
--- Users can update own project bids
-CREATE POLICY "Users can update own project bids" ON project_bids
-  FOR UPDATE USING (auth.uid() = user_id);
+-- NOTE: project_bids table doesn't exist yet in Supabase.
+-- When you create it (from supabase-schema.sql), add public SELECT policy manually.
 
 -- ============================================================================
 -- SEED DATA: Vacancies
