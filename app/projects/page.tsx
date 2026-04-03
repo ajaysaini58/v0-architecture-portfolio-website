@@ -81,10 +81,17 @@ export default function ProjectsPage() {
                 className="w-full pl-9 pr-4 py-2.5 rounded-lg border border-input bg-background text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
               />
             </div>
-            <Button variant="outline" className="w-full sm:w-auto">
-              <Filter className="h-4 w-4 mr-2" />
-              Filters
-            </Button>
+            <div className="flex w-full sm:w-auto gap-3">
+              <Button variant="outline" className="flex-1 sm:flex-none">
+                <Filter className="h-4 w-4 mr-2" />
+                Filters
+              </Button>
+              <Button asChild className="flex-1 sm:flex-none">
+                <Link href="/post-project">
+                  Post a Project
+                </Link>
+              </Button>
+            </div>
           </div>
 
           {/* Project List */}

@@ -36,9 +36,7 @@ export function Navigation() {
             <Link href="/projects" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
               Projects
             </Link>
-            <Link href="/post-project" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-              Post a Project
-            </Link>
+
             <Link href="/blog" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
               Blog
             </Link>
@@ -111,13 +109,7 @@ export function Navigation() {
             >
               Projects
             </Link>
-            <Link
-              href="/post-project"
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-              onClick={() => setIsOpen(false)}
-            >
-              Post a Project
-            </Link>
+
             <Link
               href="/blog"
               className="text-sm text-muted-foreground hover:text-foreground transition-colors"

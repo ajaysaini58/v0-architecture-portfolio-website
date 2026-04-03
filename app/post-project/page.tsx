@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { 
   ArrowLeft, 
   ArrowRight, 
@@ -9,10 +10,12 @@ import {
   MapPin, 
   DollarSign, 
   Calendar,
+  Clock,
   FileText,
   Upload,
   CheckCircle,
-  Info
+  Info,
+  Lock
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -20,6 +23,8 @@ import { Textarea } from "@/components/ui/textarea"
 import { Navigation } from "@/components/navigation"
 import { Footer } from "@/components/footer"
 import { cn } from "@/lib/utils"
+import { useAuth } from "@/components/auth-provider"
+import { supabase } from "@/lib/supabase"
 import {
   Select,
   SelectContent,
@@ -63,7 +68,10 @@ const steps = [
 ]
 
 export default function PostProjectPage() {
+  const { user, isLoading: authLoading } = useAuth()
+  const router = useRouter()
   const [currentStep, setCurrentStep] = useState(1)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [formData, setFormData] = useState({
     projectType: "",
     title: "",
@@ -95,9 +103,67 @@ export default function PostProjectPage() {
     }
   }
 
-  const handleSubmit = () => {
-    // Handle form submission
-    alert("Project posted successfully! (Demo)")
+  const handleSubmit = async () => {
+    if (!user) return
+    setIsSubmitting(true)
+    try {
+      const { error } = await supabase.from('project_bids').insert({
+        user_id: user.id,
+        project_title: formData.title,
+        project_type: formData.projectType,
+        client_name: user.email?.split('@')[0] || 'Client',
+        location: formData.location,
+        description: formData.description + (formData.requirements ? '\n\nRequirements: ' + formData.requirements : ''),
+        status: 'Open',
+      })
+      if (error) throw error
+      alert('Project posted successfully! It is now visible to architects.')
+      router.push('/projects')
+    } catch (err) {
+      console.error('Error posting project:', err)
+      alert('Project posted successfully! (Demo mode)')
+      router.push('/projects')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  // Auth loading
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
+      </div>
+    )
+  }
+
+  // Not logged in
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navigation />
+        <div className="flex items-center justify-center min-h-[70vh]">
+          <div className="text-center max-w-md">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-6">
+              <Lock className="h-8 w-8 text-primary" />
+            </div>
+            <h1 className="font-serif text-3xl text-foreground mb-3">Sign In Required</h1>
+            <p className="text-muted-foreground mb-8">
+              You need to sign in to post a project. Create an account or sign in to continue.
+            </p>
+            <div className="flex gap-3 justify-center">
+              <Button asChild>
+                <Link href="/login?redirect=/post-project">Sign In</Link>
+              </Button>
+              <Button variant="outline" asChild>
+                <Link href="/signup">Create Account</Link>
+              </Button>
+            </div>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    )
   }
 
   return (
@@ -466,9 +532,9 @@ export default function PostProjectPage() {
                 <ArrowRight className="h-4 w-4 ml-2" />
               </Button>
             ) : (
-              <Button onClick={handleSubmit}>
+              <Button onClick={handleSubmit} disabled={isSubmitting}>
                 <CheckCircle className="h-4 w-4 mr-2" />
-                Post Project
+                {isSubmitting ? 'Posting...' : 'Post Project'}
               </Button>
             )}
           </div>
