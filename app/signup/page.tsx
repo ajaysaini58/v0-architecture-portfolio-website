@@ -302,7 +302,7 @@ export default function SignupPage() {
 
                 <div className="space-y-2">
                   <Label htmlFor="company">
-                    {formData.userType === "architect" ? "Studio/Firm Name" : 
+                    {formData.userType === "architect" ? "Studio/Firm Name/Freelancer" : 
                      formData.userType === "hr" ? "Company Name" : "Company (Optional)"}
                   </Label>
                   <Input
