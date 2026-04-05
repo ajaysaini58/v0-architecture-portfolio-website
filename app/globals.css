@@ -4,7 +4,7 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  /* Clean Light Mode */
+  /* Clean Light Mode — Dark navy primary */
   --background: 0 0% 100%;
   --foreground: 222 47% 11%;
   
@@ -34,6 +34,10 @@
   --ring: 222 47% 11%;
   
   --radius: 0.5rem;
+
+  /* Success & Warning */
+  --success: 142 71% 45%;
+  --warning: 38 92% 50%;
 }
 
 /* Base resets & styles */
@@ -43,49 +47,6 @@ html {
 
 body {
   font-feature-settings: "rlig" 1, "calt" 1;
-}
-
-/* Glassmorphism & Effects */
-.glass {
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(0, 0, 0, 0.05);
-  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
-}
-
-.dark .glass {
-  background: rgba(15, 23, 42, 0.85);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
-}
-
-/* Premium Card Hover */
-.card-hover {
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.card-hover:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.08);
-}
-
-.dark .card-hover:hover {
-  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.4);
-}
-
-/* Image Zoom */
-.image-hover-zoom {
-  overflow: hidden;
-}
-
-.image-hover-zoom img {
-  transition: transform 0.6s cubic-bezier(0.33, 1, 0.68, 1);
-}
-
-.group:hover .image-hover-zoom img,
-.image-hover-zoom:hover img {
-  transform: scale(1.05);
 }
 
 /* Tailwind Base overrides */
@@ -126,13 +87,13 @@ body {
   }
 }
 
-/* Premium micro-animations & utilities */
+/* Premium utilities — single definition of each */
 @layer utilities {
   .glass {
-    @apply bg-background/70 backdrop-blur-lg border border-border/50 shadow-sm transition-all duration-300;
+    @apply bg-card border border-border shadow-lg;
   }
   .glass-hover {
-    @apply hover:bg-background/90 hover:shadow-md hover:border-border;
+    @apply hover:shadow-xl hover:border-border;
   }
   .card-hover {
     @apply transition-all duration-300 hover:-translate-y-1 hover:shadow-lg dark:hover:shadow-primary/5 hover:border-border;
@@ -146,4 +107,23 @@ body {
   .image-hover-zoom img {
     @apply transition-transform duration-700 hover:scale-105;
   }
+}
+
+/* Smooth page transitions */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.5s ease-out forwards;
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-slide-up {
+  animation: slideUp 0.6s ease-out forwards;
 }

@@ -26,20 +26,20 @@ export default function HomePage() {
             className="object-cover"
             priority
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-background/95 via-background/80 to-background/30" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#0f172a]/95 via-[#0f172a]/80 to-[#0f172a]/40" />
         </div>
 
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
-          <div className="max-w-2xl">
-            <p className="text-foreground/80 text-sm uppercase tracking-widest mb-4">
+          <div className="max-w-2xl animate-fade-in">
+            <p className="text-white/70 text-sm uppercase tracking-widest mb-4">
               Architecture Platform
             </p>
-            <h1 className="font-serif text-5xl sm:text-6xl lg:text-7xl text-foreground leading-[1.1] text-balance">
+            <h1 className="font-serif text-5xl sm:text-6xl lg:text-7xl text-white leading-[1.1] text-balance">
               Where Vision Meets
               <br />
               <span className="text-amber-400 font-semibold">Extraordinary Design</span>
             </h1>
-            <p className="mt-6 text-lg text-foreground/80 leading-relaxed max-w-xl">
+            <p className="mt-6 text-lg text-white/80 leading-relaxed max-w-xl">
               Connect with world-class architects who transform spaces into living art. 
               Browse portfolios, post your project, and bring your architectural vision to life.
             </p>
@@ -51,7 +51,7 @@ export default function HomePage() {
                   <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </Link>
               </Button>
-              <Button size="lg" variant="outline" asChild className="bg-background/50 hover:bg-background/80">
+              <Button size="lg" variant="outline" asChild className="bg-white/10 hover:bg-white/20 text-white border-white/30">
                 <Link href="/post-project">
                   Post Your Project
                 </Link>
@@ -61,16 +61,16 @@ export default function HomePage() {
             {/* Stats */}
             <div className="mt-16 grid grid-cols-3 gap-8">
               <div>
-                <p className="font-serif text-3xl text-foreground">500+</p>
-                <p className="text-sm text-foreground/60 mt-1">Architects</p>
+                <p className="font-serif text-3xl text-white">500+</p>
+                <p className="text-sm text-white/60 mt-1">Architects</p>
               </div>
               <div>
-                <p className="font-serif text-3xl text-foreground">2,500+</p>
-                <p className="text-sm text-foreground/60 mt-1">Projects</p>
+                <p className="font-serif text-3xl text-white">2,500+</p>
+                <p className="text-sm text-white/60 mt-1">Projects</p>
               </div>
               <div>
-                <p className="font-serif text-3xl text-foreground">98%</p>
-                <p className="text-sm text-foreground/60 mt-1">Satisfaction</p>
+                <p className="font-serif text-3xl text-white">98%</p>
+                <p className="text-sm text-white/60 mt-1">Satisfaction</p>
               </div>
             </div>
           </div>
@@ -79,7 +79,7 @@ export default function HomePage() {
 
       {/* Search Bar */}
       <section className="relative z-20 -mt-8 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="glass rounded-xl p-6">
+        <div className="bg-card rounded-xl p-6 shadow-xl border border-border">
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="flex-1 relative">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
@@ -106,7 +106,7 @@ export default function HomePage() {
         </div>
 
         <div className="grid md:grid-cols-3 gap-8">
-          <div className="text-center p-8">
+          <div className="text-center p-8 rounded-xl border border-border bg-card card-hover">
             <div className="inline-flex items-center justify-center h-16 w-16 rounded-full bg-primary/10 text-primary mb-6">
               <Search className="h-7 w-7" />
             </div>
@@ -115,7 +115,7 @@ export default function HomePage() {
               Explore portfolios from hundreds of talented architects. Filter by style, location, and specialty.
             </p>
           </div>
-          <div className="text-center p-8">
+          <div className="text-center p-8 rounded-xl border border-border bg-card card-hover">
             <div className="inline-flex items-center justify-center h-16 w-16 rounded-full bg-primary/10 text-primary mb-6">
               <Building2 className="h-7 w-7" />
             </div>
@@ -124,7 +124,7 @@ export default function HomePage() {
               Share your vision and receive proposals from interested architects who match your needs.
             </p>
           </div>
-          <div className="text-center p-8">
+          <div className="text-center p-8 rounded-xl border border-border bg-card card-hover">
             <div className="inline-flex items-center justify-center h-16 w-16 rounded-full bg-primary/10 text-primary mb-6">
               <Users className="h-7 w-7" />
             </div>
@@ -209,7 +209,7 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-2 gap-16 items-center">
             <div>
-              <p className="text-sm uppercase tracking-widest text-primary mb-3">Why Architure</p>
+              <p className="text-sm uppercase tracking-widest text-primary mb-3">Why DByARCH</p>
               <h2 className="font-serif text-4xl sm:text-5xl text-foreground mb-8 text-balance">
                 The Trusted Platform for Architecture Excellence
               </h2>

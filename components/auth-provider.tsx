@@ -3,20 +3,31 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { createSupabaseClient } from "@/lib/supabase";
 
-export type UserRole = "admin" | "architect" | "client" | null;
+export type UserRole = "admin" | "architect" | "client" | "hr" | null;
+
+interface UserProfile {
+  id: string;
+  firstName: string;
+  lastName: string;
+  avatarUrl?: string;
+  company?: string;
+  userType: string;
+}
 
 interface AuthContextType {
   user: any | null;
   role: UserRole;
+  profile: UserProfile | null;
   isLoading: boolean;
-  setMockRole: (role: UserRole) => void; // For dev purposes
+  signOut: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
   role: null,
+  profile: null,
   isLoading: true,
-  setMockRole: () => {},
+  signOut: async () => {},
 });
 
 export const useAuth = () => useContext(AuthContext);
@@ -24,19 +35,35 @@ export const useAuth = () => useContext(AuthContext);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<any | null>(null);
   const [role, setRole] = useState<UserRole>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Fallback to mock data if no Supabase URL is present
   const hasSupabase = !!process.env.NEXT_PUBLIC_SUPABASE_URL;
+
+  const fetchProfile = async (userId: string) => {
+    const supabase = createSupabaseClient();
+    const { data } = await supabase
+      .from("user_profiles")
+      .select("*")
+      .eq("user_id", userId)
+      .single();
+    
+    if (data) {
+      setProfile({
+        id: data.id,
+        firstName: data.first_name || "",
+        lastName: data.last_name || "",
+        avatarUrl: data.avatar_url,
+        company: data.company_name,
+        userType: data.user_type,
+      });
+      setRole(data.user_type as UserRole);
+    }
+    return data;
+  };
 
   useEffect(() => {
     if (!hasSupabase) {
-      // Setup mock state for development
-      console.warn("No Supabase URL provided. Using mock auth state for development.");
-      const savedMockRole = (typeof window !== "undefined" ? localStorage.getItem("mock_role") : null) as UserRole;
-      
-      setUser(savedMockRole ? { id: "mock-user-123", email: "mock@example.com" } : null);
-      setRole(savedMockRole);
       setIsLoading(false);
       return;
     }
@@ -49,26 +76,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         
         if (session?.user) {
           setUser(session.user);
-          // Fetch role from user_profiles table
-          const { data: profile } = await supabase
-            .from("user_profiles")
-            .select("user_type")
-            .eq("user_id", session.user.id)
-            .single();
-            
-          if (profile) {
-              setRole(profile.user_type as UserRole);
-          } else {
-             // Admin check based on email or metadata
-             if (session.user.email?.includes('admin')) {
-                setRole('admin');
-             } else {
-                setRole('client');
-             }
+          const profileData = await fetchProfile(session.user.id);
+          
+          if (!profileData) {
+            // Fallback role detection
+            if (session.user.email?.includes('admin')) {
+              setRole('admin');
+            } else {
+              setRole('client');
+            }
           }
         } else {
           setUser(null);
           setRole(null);
+          setProfile(null);
         }
       } catch (error) {
         console.error("Auth initialization error:", error);
@@ -80,18 +101,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     checkUser();
 
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_OUT') {
+        setUser(null);
+        setRole(null);
+        setProfile(null);
+        return;
+      }
+      
       if (session?.user) {
         setUser(session.user);
-        // On change, fetch role again if necessary
-        const { data: profile } = await supabase
-            .from("user_profiles")
-            .select("user_type")
-            .eq("user_id", session.user.id)
-            .single();
-        if (profile) setRole(profile.user_type as UserRole);
+        await fetchProfile(session.user.id);
       } else {
         setUser(null);
         setRole(null);
+        setProfile(null);
       }
     });
 
@@ -100,35 +123,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, [hasSupabase]);
 
-  const setMockRole = (newRole: UserRole) => {
-    if (!hasSupabase) {
-      if (newRole) {
-        localStorage.setItem("mock_role", newRole);
-        setUser({ id: "mock-" + newRole, email: `mock-${newRole}@example.com` });
-      } else {
-        localStorage.removeItem("mock_role");
-        setUser(null);
-      }
-      setRole(newRole);
-    }
+  const signOut = async () => {
+    const supabase = createSupabaseClient();
+    await supabase.auth.signOut();
+    setUser(null);
+    setRole(null);
+    setProfile(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, role, isLoading, setMockRole }}>
+    <AuthContext.Provider value={{ user, role, profile, isLoading, signOut }}>
       {children}
-      
-      {/* DevTools: Mock Role Switcher when no Supabase connected */}
-      {!hasSupabase && (
-        <div className="fixed bottom-4 right-4 z-[100] bg-card border border-border rounded-lg shadow-xl p-3 text-xs w-64 opacity-50 hover:opacity-100 transition-opacity">
-          <p className="font-semibold mb-2 text-foreground">Dev Env: Mock Auth</p>
-          <div className="flex flex-col gap-1">
-            <button onClick={() => setMockRole('admin')} className={`px-2 py-1 text-left rounded ${role === 'admin' ? 'bg-primary text-primary-foreground' : 'hover:bg-muted text-muted-foreground'}`}>Admin View</button>
-            <button onClick={() => setMockRole('architect')} className={`px-2 py-1 text-left rounded ${role === 'architect' ? 'bg-primary text-primary-foreground' : 'hover:bg-muted text-muted-foreground'}`}>Architect View</button>
-            <button onClick={() => setMockRole('client')} className={`px-2 py-1 text-left rounded ${role === 'client' ? 'bg-primary text-primary-foreground' : 'hover:bg-muted text-muted-foreground'}`}>Client View</button>
-            <button onClick={() => setMockRole(null)} className={`px-2 py-1 text-left rounded ${role === null ? 'bg-primary text-primary-foreground' : 'hover:bg-muted text-muted-foreground'}`}>Logged Out View</button>
-          </div>
-        </div>
-      )}
     </AuthContext.Provider>
   );
 }

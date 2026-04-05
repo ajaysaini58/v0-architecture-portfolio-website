@@ -143,7 +143,7 @@ export interface User {
   id: string
   email: string
   password?: string // Only on client during registration, never stored
-  userType: 'architect' | 'client' | 'admin'
+  userType: 'architect' | 'client' | 'admin' | 'hr'
   profile: UserProfile
   // Supabase auth metadata
   createdAt?: string

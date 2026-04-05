@@ -3,18 +3,19 @@
 import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Eye, EyeOff, ArrowRight, Building2, Check } from "lucide-react"
+import { Eye, EyeOff, ArrowRight, Building2, Check, ArrowLeft, UserSearch, AlertCircle, Mail } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-
-import { ArrowLeft } from "lucide-react"
+import { signUpUser, createUserProfile, createArchitectProfile } from "@/lib/supabase"
 
 export default function SignupPage() {
   const router = useRouter()
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState("")
+  const [emailSent, setEmailSent] = useState(false)
   const [step, setStep] = useState(1)
   const [formData, setFormData] = useState({
     userType: "client",
@@ -23,10 +24,12 @@ export default function SignupPage() {
     email: "",
     password: "",
     company: "",
+    location: "",
   })
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setError("")
     
     if (step === 1) {
       setStep(2)
@@ -35,11 +38,46 @@ export default function SignupPage() {
     
     setIsLoading(true)
     
-    // Simulate signup
-    await new Promise((resolve) => setTimeout(resolve, 1500))
-    
-    setIsLoading(false)
-    router.push("/projects")
+    try {
+      // 1. Sign up with Supabase Auth
+      const authData = await signUpUser(formData.email, formData.password)
+      
+      if (!authData.user) {
+        throw new Error("Failed to create account. Please try again.")
+      }
+
+      const userId = authData.user.id
+
+      // 2. Create user_profiles row
+      await createUserProfile({
+        user_id: userId,
+        user_type: formData.userType as 'architect' | 'client' | 'hr',
+        first_name: formData.firstName,
+        last_name: formData.lastName,
+        company_name: formData.company || undefined,
+      })
+
+      // 3. If architect, create architects row
+      if (formData.userType === "architect") {
+        await createArchitectProfile({
+          user_id: userId,
+          name: `${formData.firstName} ${formData.lastName}`,
+          title: "Architect",
+          location: formData.location || "Not specified",
+          email: formData.email,
+          bio: "",
+          specialties: [],
+        })
+      }
+
+      // Show email confirmation message
+      setEmailSent(true)
+    } catch (err: any) {
+      console.error("Signup error:", err)
+      setError(err.message || "An error occurred during signup. Please try again.")
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const passwordRequirements = [
@@ -47,6 +85,30 @@ export default function SignupPage() {
     { text: "One uppercase letter", met: /[A-Z]/.test(formData.password) },
     { text: "One number", met: /\d/.test(formData.password) },
   ]
+
+  // Email confirmation sent screen
+  if (emailSent) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-8 bg-background">
+        <div className="w-full max-w-md text-center space-y-6">
+          <div className="inline-flex items-center justify-center h-20 w-20 rounded-full bg-primary/10 text-primary mx-auto">
+            <Mail className="h-10 w-10" />
+          </div>
+          <h1 className="font-serif text-3xl text-foreground">Check Your Email</h1>
+          <p className="text-muted-foreground">
+            We&apos;ve sent a confirmation link to <strong className="text-foreground">{formData.email}</strong>.
+            Please click the link to verify your account and start using DByARCH.
+          </p>
+          <div className="bg-secondary/50 rounded-lg p-4 text-sm text-muted-foreground">
+            <p>Didn&apos;t receive the email? Check your spam folder or try signing up again.</p>
+          </div>
+          <Button asChild variant="outline" className="mt-4">
+            <Link href="/login">Go to Sign In</Link>
+          </Button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen flex">
@@ -85,6 +147,14 @@ export default function SignupPage() {
             <div className={`h-2 w-16 rounded-full ${step >= 2 ? "bg-primary" : "bg-muted"}`} />
           </div>
 
+          {/* Error Message */}
+          {error && (
+            <div className="flex items-center gap-2 p-3 bg-destructive/10 border border-destructive/20 rounded-lg text-sm text-destructive">
+              <AlertCircle className="h-4 w-4 shrink-0" />
+              {error}
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-6">
             {step === 1 ? (
               <>
@@ -93,42 +163,64 @@ export default function SignupPage() {
                   <RadioGroup
                     value={formData.userType}
                     onValueChange={(value) => setFormData({ ...formData, userType: value })}
-                    className="grid grid-cols-2 gap-4"
+                    className="grid grid-cols-3 gap-3"
                   >
+                    {/* Client */}
                     <Label
                       htmlFor="client"
-                      className={`flex flex-col items-center gap-3 p-6 border rounded-lg cursor-pointer transition-all ${
+                      className={`flex flex-col items-center gap-2 p-4 border rounded-lg cursor-pointer transition-all text-center ${
                         formData.userType === "client"
                           ? "border-primary bg-primary/5"
                           : "border-border hover:border-primary/50"
                       }`}
                     >
                       <RadioGroupItem value="client" id="client" className="sr-only" />
-                      <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-                        <svg className="h-6 w-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                        <svg className="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                         </svg>
                       </div>
-                      <span className="font-medium">Client</span>
-                      <span className="text-xs text-muted-foreground text-center">
-                        Looking to hire an architect
+                      <span className="font-medium text-sm">Client</span>
+                      <span className="text-xs text-muted-foreground">
+                        Hire an architect
                       </span>
                     </Label>
+
+                    {/* Architect */}
                     <Label
                       htmlFor="architect"
-                      className={`flex flex-col items-center gap-3 p-6 border rounded-lg cursor-pointer transition-all ${
+                      className={`flex flex-col items-center gap-2 p-4 border rounded-lg cursor-pointer transition-all text-center ${
                         formData.userType === "architect"
                           ? "border-primary bg-primary/5"
                           : "border-border hover:border-primary/50"
                       }`}
                     >
                       <RadioGroupItem value="architect" id="architect" className="sr-only" />
-                      <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-                        <Building2 className="h-6 w-6 text-primary" />
+                      <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                        <Building2 className="h-5 w-5 text-primary" />
                       </div>
-                      <span className="font-medium">Architect</span>
-                      <span className="text-xs text-muted-foreground text-center">
-                        Showcase my portfolio
+                      <span className="font-medium text-sm">Architect</span>
+                      <span className="text-xs text-muted-foreground">
+                        Show portfolio
+                      </span>
+                    </Label>
+
+                    {/* HR / Recruiter */}
+                    <Label
+                      htmlFor="hr"
+                      className={`flex flex-col items-center gap-2 p-4 border rounded-lg cursor-pointer transition-all text-center ${
+                        formData.userType === "hr"
+                          ? "border-primary bg-primary/5"
+                          : "border-border hover:border-primary/50"
+                      }`}
+                    >
+                      <RadioGroupItem value="hr" id="hr" className="sr-only" />
+                      <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                        <UserSearch className="h-5 w-5 text-primary" />
+                      </div>
+                      <span className="font-medium text-sm">HR / Recruiter</span>
+                      <span className="text-xs text-muted-foreground">
+                        Post vacancies
                       </span>
                     </Label>
                   </RadioGroup>
@@ -210,18 +302,35 @@ export default function SignupPage() {
 
                 <div className="space-y-2">
                   <Label htmlFor="company">
-                    {formData.userType === "architect" ? "Studio/Firm Name" : "Company (Optional)"}
+                    {formData.userType === "architect" ? "Studio/Firm Name" : 
+                     formData.userType === "hr" ? "Company Name" : "Company (Optional)"}
                   </Label>
                   <Input
                     id="company"
                     type="text"
-                    placeholder={formData.userType === "architect" ? "Studio Name" : "Your company"}
+                    placeholder={formData.userType === "architect" ? "Studio Name" : 
+                                 formData.userType === "hr" ? "Your company" : "Your company"}
                     value={formData.company}
                     onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-                    required={formData.userType === "architect"}
+                    required={formData.userType === "architect" || formData.userType === "hr"}
                     className="h-12"
                   />
                 </div>
+
+                {formData.userType === "architect" && (
+                  <div className="space-y-2">
+                    <Label htmlFor="location">Location</Label>
+                    <Input
+                      id="location"
+                      type="text"
+                      placeholder="City, State"
+                      value={formData.location}
+                      onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                      required
+                      className="h-12"
+                    />
+                  </div>
+                )}
 
                 <p className="text-xs text-muted-foreground">
                   By creating an account, you agree to our{" "}
@@ -271,43 +380,6 @@ export default function SignupPage() {
             </div>
           </form>
 
-          {step === 1 && (
-            <>
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-border" />
-                </div>
-                <div className="relative flex justify-center text-sm">
-                  <span className="px-4 bg-background text-muted-foreground">Or sign up with</span>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-3 gap-4">
-                <Button variant="outline" className="h-12">
-                  <svg className="h-5 w-5 mr-2" viewBox="0 0 24 24">
-                    <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                    <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                    <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                    <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                  </svg>
-                  Google
-                </Button>
-                <Button variant="outline" className="h-12">
-                  <svg className="h-5 w-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
-                  </svg>
-                  GitHub
-                </Button>
-                <Button variant="outline" className="h-12">
-                  <svg className="h-5 w-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.475-2.236-1.986-2.236-1.081 0-1.722.722-2.006 1.413-.103.25-.129.599-.129.948v5.444h-3.554s.05-8.736 0-9.646h3.554v1.364c.43-.664 1.199-1.609 2.923-1.609 2.135 0 3.752 1.395 3.752 4.385v5.506zM5.337 9.433c-1.144 0-1.915-.759-1.915-1.71 0-.955.77-1.71 1.963-1.71 1.192 0 1.914.759 1.938 1.71 0 .951-.746 1.71-1.986 1.71zm1.582 11.019H3.656V9.806h3.263v10.646zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
-                  </svg>
-                  LinkedIn
-                </Button>
-              </div>
-            </>
-          )}
-
           <p className="text-center text-sm text-muted-foreground">
             Already have an account?{" "}
             <Link href="/login" className="text-primary hover:underline font-medium">
@@ -332,11 +404,15 @@ export default function SignupPage() {
             <h2 className="font-serif text-4xl mb-6">
               {formData.userType === "architect"
                 ? "Showcase your work to thousands"
+                : formData.userType === "hr"
+                ? "Find top architecture talent"
                 : "Find your perfect architect"}
             </h2>
             <p className="text-lg opacity-90">
               {formData.userType === "architect"
                 ? "Join a community of talented architects and connect with clients looking for exceptional design."
+                : formData.userType === "hr"
+                ? "Post job vacancies and browse profiles of vetted architects ready for new opportunities."
                 : "Browse portfolios, compare styles, and hire the architect that matches your vision."}
             </p>
             
@@ -344,12 +420,18 @@ export default function SignupPage() {
               {[
                 formData.userType === "architect"
                   ? "Create a stunning portfolio"
+                  : formData.userType === "hr"
+                  ? "Post unlimited vacancies"
                   : "Browse 2,500+ architects",
                 formData.userType === "architect"
                   ? "Receive project opportunities"
+                  : formData.userType === "hr"
+                  ? "Search architect profiles"
                   : "Compare bids and proposals",
                 formData.userType === "architect"
                   ? "Grow your client base"
+                  : formData.userType === "hr"
+                  ? "Connect with top talent"
                   : "Hire with confidence",
               ].map((benefit, i) => (
                 <div key={i} className="flex items-center gap-3 justify-center">
