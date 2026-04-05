@@ -1,11 +1,17 @@
 // Supabase client configuration and utility functions
 import { createBrowserClient } from '@supabase/ssr'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co'
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key'
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
 // Initialize Supabase client
 export const createSupabaseClient = () => {
+  if (!supabaseUrl || !supabaseAnonKey) {
+    console.error('Missing Supabase Environment Variables: Please set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in your .env.local file.')
+    // Attempt to initialize with dummy strings only so UI doesn't crash statically,
+    // but subsequent queries will correctly log/fail rather than silently returning 'failed to fetch'
+    return createBrowserClient('https://placeholder.supabase.co', 'placeholder-key')
+  }
   return createBrowserClient(supabaseUrl, supabaseAnonKey)
 }
 
@@ -374,6 +380,22 @@ export async function createBlogPost(
   return data
 }
 
+export async function updateBlogPostStatus(
+  supabaseClient: any,
+  id: string,
+  status: string
+) {
+  const { data, error } = await supabaseClient
+    .from('blog_posts')
+    .update({ status })
+    .eq('id', id)
+    .select()
+    .single()
+  
+  if (error) throw error
+  return data
+}
+
 export async function addBlogComment(
   supabaseClient: any,
   blogPostId: string,
@@ -722,7 +744,7 @@ export async function createVacancy(supabaseClient: any, vacancy: {
 }) {
   const { data, error } = await supabaseClient
     .from('vacancies')
-    .insert({ ...vacancy, status: 'approved' })
+    .insert({ ...vacancy, status: 'pending' })
     .select()
     .single()
 

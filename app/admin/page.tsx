@@ -10,7 +10,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
 import { useAuth } from '@/components/auth-provider'
-import { supabase } from '@/lib/supabase'
+import { updateBlogPostStatus, updateVacancyStatus, supabase } from '@/lib/supabase'
 import { blogPosts, vacancies as mockVacancies } from '@/lib/data'
 
 export default function AdminDashboard() {
@@ -75,28 +75,28 @@ export default function AdminDashboard() {
 
   const handleApproveBlog = async (id: string) => {
     try {
-      await supabase.from('blog_posts').update({ status: 'approved' }).eq('id', id)
+      await updateBlogPostStatus(supabase, id, 'approved')
     } catch { /* fallback */ }
     setBlogs(prev => prev.map(b => b.id === id ? { ...b, status: 'approved' } : b))
   }
 
   const handleRejectBlog = async (id: string) => {
     try {
-      await supabase.from('blog_posts').update({ status: 'rejected' }).eq('id', id)
+      await updateBlogPostStatus(supabase, id, 'rejected')
     } catch { /* fallback */ }
     setBlogs(prev => prev.filter(b => b.id !== id))
   }
 
   const handleApproveVacancy = async (id: string) => {
     try {
-      await supabase.from('vacancies').update({ status: 'approved' }).eq('id', id)
+      await updateVacancyStatus(supabase, id, 'approved')
     } catch { /* fallback */ }
     setVacancyList(prev => prev.map(v => v.id === id ? { ...v, status: 'approved' } : v))
   }
 
   const handleRejectVacancy = async (id: string) => {
     try {
-      await supabase.from('vacancies').update({ status: 'rejected' }).eq('id', id)
+      await updateVacancyStatus(supabase, id, 'rejected')
     } catch { /* fallback */ }
     setVacancyList(prev => prev.filter(v => v.id !== id))
   }

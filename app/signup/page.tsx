@@ -3,12 +3,12 @@
 import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Eye, EyeOff, ArrowRight, Building2, Check, ArrowLeft, UserSearch, AlertCircle, Mail } from "lucide-react"
+import { Eye, EyeOff, ArrowRight, Building2, Check, ArrowLeft, UserSearch, AlertCircle, Mail, Github, Linkedin, Globe } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { signUpUser, createUserProfile, createArchitectProfile } from "@/lib/supabase"
+import { signUpUser, createUserProfile, createArchitectProfile, supabase } from "@/lib/supabase"
 
 export default function SignupPage() {
   const router = useRouter()
@@ -76,6 +76,24 @@ export default function SignupPage() {
       console.error("Signup error:", err)
       setError(err.message || "An error occurred during signup. Please try again.")
     } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleOAuthLogin = async (provider: 'google' | 'github' | 'linkedin_oidc') => {
+    setIsLoading(true)
+    setError("")
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: {
+          redirectTo: `${window.location.origin}/profile`,
+        },
+      })
+      if (error) throw error
+    } catch (err: any) {
+      console.error(`${provider} signup error:`, err)
+      setError(err.message || `An error occurred during ${provider} sign up.`)
       setIsLoading(false)
     }
   }
@@ -380,7 +398,37 @@ export default function SignupPage() {
             </div>
           </form>
 
-          <p className="text-center text-sm text-muted-foreground">
+          {step === 1 && (
+            <>
+              <div className="relative my-8">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t border-border" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-background px-2 text-muted-foreground">
+                    Or continue with
+                  </span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                <Button variant="outline" type="button" onClick={() => handleOAuthLogin('google')} disabled={isLoading}>
+                  <Globe className="mr-2 h-4 w-4" />
+                  Google
+                </Button>
+                <Button variant="outline" type="button" onClick={() => handleOAuthLogin('github')} disabled={isLoading}>
+                  <Github className="mr-2 h-4 w-4" />
+                  GitHub
+                </Button>
+                <Button variant="outline" type="button" onClick={() => handleOAuthLogin('linkedin_oidc')} disabled={isLoading}>
+                  <Linkedin className="mr-2 h-4 w-4" />
+                  LinkedIn
+                </Button>
+              </div>
+            </>
+          )}
+
+          <p className="text-center text-sm text-muted-foreground mt-8">
             Already have an account?{" "}
             <Link href="/login" className="text-primary hover:underline font-medium">
               Sign in

@@ -1,29 +1,71 @@
+"use client"
+
+import { useState, useEffect } from "react"
+import { useParams } from "next/navigation"
 import Image from "next/image"
 import Link from "next/link"
-import { notFound } from "next/navigation"
 import { MapPin, Star, Briefcase, Mail, Phone, Calendar, ArrowLeft, ExternalLink, DollarSign, Zap, Instagram, Linkedin, Globe, Twitter } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Navigation } from "@/components/navigation"
 import { Footer } from "@/components/footer"
-import { architects, portfolioProjects } from "@/lib/data"
+import { getArchitectById, getPortfolioProjectsByArchitect, getArchitectReviews, supabase } from "@/lib/supabase"
 
-interface ArchitectPageProps {
-  params: Promise<{ id: string }>
-}
+export default function ArchitectPage() {
+  const params = useParams()
+  const id = params.id as string
+  const [architect, setArchitect] = useState<any>(null)
+  const [projects, setProjects] = useState<any[]>([])
+  const [reviews, setReviews] = useState<any[]>([])
+  const [isLoading, setIsLoading] = useState(true)
 
-export default async function ArchitectPage({ params }: ArchitectPageProps) {
-  const { id } = await params
-  const architect = architects.find((a) => a.id === id)
+  useEffect(() => {
+    async function loadData() {
+      if (!id) return
+      setIsLoading(true)
+      try {
+        const [arch, projs, revs] = await Promise.all([
+          getArchitectById(supabase, id),
+          getPortfolioProjectsByArchitect(supabase, id),
+          getArchitectReviews(supabase, id)
+        ])
+        setArchitect(arch)
+        setProjects(projs)
+        setReviews(revs)
+      } catch (error) {
+        console.error("Error loading architect data:", error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    loadData()
+  }, [id])
 
-  if (!architect) {
-    notFound()
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navigation />
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
+        </div>
+      </div>
+    )
   }
 
-  const architectProjects = portfolioProjects.filter(
-    (p) => p.architectId === architect.id
-  )
+  if (!architect) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navigation />
+        <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
+          <h1 className="text-2xl font-serif">Architect not found</h1>
+          <Button asChild variant="outline">
+            <Link href="/architects">Back to Architects</Link>
+          </Button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -34,7 +76,7 @@ export default async function ArchitectPage({ params }: ArchitectPageProps) {
         {/* Cover Image */}
         <div className="relative h-64 sm:h-80 lg:h-96">
           <Image
-            src={architect.coverImage}
+            src={architect.cover_image_url || "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=2070&auto=format&fit=crop"}
             alt={`${architect.name}'s work`}
             fill
             className="object-cover"
@@ -48,19 +90,27 @@ export default async function ArchitectPage({ params }: ArchitectPageProps) {
           <div className="bg-card rounded-xl border border-border shadow-lg p-6 sm:p-8">
             <div className="flex flex-col sm:flex-row gap-6">
               {/* Avatar */}
-              <div className="relative h-28 w-28 sm:h-36 sm:w-36 rounded-xl overflow-hidden border-4 border-background shadow-md shrink-0 mx-auto sm:mx-0">
-                <Image
-                  src={architect.image}
-                  alt={architect.name}
-                  fill
-                  className="object-cover"
-                />
+              <div className="relative h-28 w-28 sm:h-36 sm:w-36 rounded-xl overflow-hidden border-4 border-background shadow-md shrink-0 mx-auto sm:mx-0 bg-secondary">
+                {architect.image_url ? (
+                  <Image
+                    src={architect.image_url}
+                    alt={architect.name}
+                    fill
+                    className="object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-primary/10">
+                    <span className="font-serif text-4xl text-primary">
+                      {architect.name?.split(" ").map((n: string) => n[0]).join("")}
+                    </span>
+                  </div>
+                )}
               </div>
 
               {/* Info */}
-              <div className="flex-1 text-center sm:text-left">
+              <div className="flex-1 text-center sm:text-left text-foreground">
                 <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mb-2">
-                  <h1 className="font-serif text-3xl text-card-foreground">{architect.name}</h1>
+                  <h1 className="font-serif text-3xl">{architect.name}</h1>
                   {architect.featured && (
                     <Badge className="w-fit mx-auto sm:mx-0">Featured</Badge>
                   )}
@@ -72,18 +122,20 @@ export default async function ArchitectPage({ params }: ArchitectPageProps) {
                     <MapPin className="h-4 w-4" />
                     {architect.location}
                   </span>
-                  <span className="flex items-center gap-1">
-                    <Star className="h-4 w-4 fill-primary text-primary" />
-                    {architect.rating.toFixed(1)} ({architect.reviewCount} reviews)
-                  </span>
+                  {architect.rating > 0 && (
+                    <span className="flex items-center gap-1">
+                      <Star className="h-4 w-4 fill-primary text-primary" />
+                      {architect.rating.toFixed(1)} ({architect.review_count} reviews)
+                    </span>
+                  )}
                   <span className="flex items-center gap-1">
                     <Briefcase className="h-4 w-4" />
-                    {architect.projectCount} projects
+                    {architect.project_count || projects.length} projects
                   </span>
                 </div>
 
                 <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
-                  {architect.specialties.map((specialty) => (
+                  {(architect.specialties || []).map((specialty: string) => (
                     <Badge key={specialty} variant="secondary">
                       {specialty}
                     </Badge>
@@ -100,7 +152,7 @@ export default async function ArchitectPage({ params }: ArchitectPageProps) {
                   </Link>
                 </Button>
                 <Button size="lg" variant="outline" asChild>
-                  <Link href={`/post-project?architect=${architect.id}`}>
+                  <Link href={`/projects/new?architect=${architect.id}`}>
                     <Calendar className="h-4 w-4 mr-2" />
                     Request Quote
                   </Link>
@@ -124,11 +176,15 @@ export default async function ArchitectPage({ params }: ArchitectPageProps) {
               <div className="space-y-3">
                 <div>
                   <p className="text-sm text-muted-foreground">Hourly Rate</p>
-                  <p className="text-2xl font-serif text-foreground">${architect.hourlyRate}/hour</p>
+                  <p className="text-2xl font-serif text-foreground">
+                    {architect.hourly_rate ? `$${architect.hourly_rate}/hour` : "Contact for pricing"}
+                  </p>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Minimum Project Budget</p>
-                  <p className="text-2xl font-serif text-foreground">${architect.minimumProjectBudget.toLocaleString()}</p>
+                  <p className="text-2xl font-serif text-foreground">
+                    {architect.minimum_project_budget ? `$${architect.minimum_project_budget.toLocaleString()}` : "No minimum"}
+                  </p>
                 </div>
               </div>
             </div>
@@ -140,33 +196,33 @@ export default async function ArchitectPage({ params }: ArchitectPageProps) {
                 Connect on Social
               </h3>
               <div className="flex flex-wrap gap-3">
-                {architect.social.instagram && (
+                {architect.instagram_url && (
                   <Button size="sm" variant="outline" asChild>
-                    <a href={architect.social.instagram} target="_blank" rel="noopener noreferrer">
+                    <a href={architect.instagram_url} target="_blank" rel="noopener noreferrer">
                       <Instagram className="h-4 w-4 mr-2" />
                       Instagram
                     </a>
                   </Button>
                 )}
-                {architect.social.linkedin && (
+                {architect.linkedin_url && (
                   <Button size="sm" variant="outline" asChild>
-                    <a href={architect.social.linkedin} target="_blank" rel="noopener noreferrer">
+                    <a href={architect.linkedin_url} target="_blank" rel="noopener noreferrer">
                       <Linkedin className="h-4 w-4 mr-2" />
                       LinkedIn
                     </a>
                   </Button>
                 )}
-                {architect.social.twitter && (
+                {architect.twitter_url && (
                   <Button size="sm" variant="outline" asChild>
-                    <a href={architect.social.twitter} target="_blank" rel="noopener noreferrer">
+                    <a href={architect.twitter_url} target="_blank" rel="noopener noreferrer">
                       <Twitter className="h-4 w-4 mr-2" />
                       Twitter
                     </a>
                   </Button>
                 )}
-                {architect.social.website && (
+                {architect.website_url && (
                   <Button size="sm" variant="outline" asChild>
-                    <a href={architect.social.website} target="_blank" rel="noopener noreferrer">
+                    <a href={architect.website_url} target="_blank" rel="noopener noreferrer">
                       <Globe className="h-4 w-4 mr-2" />
                       Website
                     </a>
@@ -178,38 +234,23 @@ export default async function ArchitectPage({ params }: ArchitectPageProps) {
         </div>
       </section>
 
-
       {/* Main Content */}
       <section className="py-12">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <Tabs defaultValue="about" className="space-y-8">
             <TabsList className="bg-secondary w-full sm:w-auto justify-start">
               <TabsTrigger value="about">About</TabsTrigger>
-              <TabsTrigger value="portfolio">Portfolio ({architectProjects.length})</TabsTrigger>
-              <TabsTrigger value="reviews">Reviews</TabsTrigger>
+              <TabsTrigger value="portfolio">Portfolio ({projects.length})</TabsTrigger>
+              <TabsTrigger value="reviews">Reviews ({reviews.length})</TabsTrigger>
             </TabsList>
 
             <TabsContent value="about" className="space-y-8">
               {/* Bio */}
               <div className="bg-card rounded-xl border border-border p-6">
                 <h2 className="font-semibold text-lg mb-4">About</h2>
-                <p className="text-muted-foreground leading-relaxed">{architect.bio}</p>
-              </div>
-
-              {/* Stats */}
-              <div className="grid sm:grid-cols-3 gap-4">
-                <div className="bg-card rounded-xl border border-border p-6 text-center">
-                  <p className="font-serif text-4xl text-foreground mb-2">{architect.projectCount}</p>
-                  <p className="text-sm text-muted-foreground">Projects Completed</p>
-                </div>
-                <div className="bg-card rounded-xl border border-border p-6 text-center">
-                  <p className="font-serif text-4xl text-foreground mb-2">{architect.rating.toFixed(1)}</p>
-                  <p className="text-sm text-muted-foreground">Average Rating</p>
-                </div>
-                <div className="bg-card rounded-xl border border-border p-6 text-center">
-                  <p className="font-serif text-4xl text-foreground mb-2">{architect.reviewCount}</p>
-                  <p className="text-sm text-muted-foreground">Client Reviews</p>
-                </div>
+                <p className="text-muted-foreground leading-relaxed whitespace-pre-line">
+                  {architect.bio || "This architect hasn't shared a bio yet."}
+                </p>
               </div>
 
               {/* Contact Info */}
@@ -218,12 +259,14 @@ export default async function ArchitectPage({ params }: ArchitectPageProps) {
                 <div className="space-y-3">
                   <div className="flex items-center gap-3 text-muted-foreground">
                     <Mail className="h-5 w-5 shrink-0" />
-                    <span>contact@{architect.id.replace("-", "")}.com</span>
+                    <span>{architect.email}</span>
                   </div>
-                  <div className="flex items-center gap-3 text-muted-foreground">
-                    <Phone className="h-5 w-5 shrink-0" />
-                    <span>+1 (555) 123-4567</span>
-                  </div>
+                  {architect.phone && (
+                    <div className="flex items-center gap-3 text-muted-foreground">
+                      <Phone className="h-5 w-5 shrink-0" />
+                      <span>{architect.phone}</span>
+                    </div>
+                  )}
                   <div className="flex items-center gap-3 text-muted-foreground">
                     <MapPin className="h-5 w-5 shrink-0" />
                     <span>{architect.location}</span>
@@ -233,9 +276,9 @@ export default async function ArchitectPage({ params }: ArchitectPageProps) {
             </TabsContent>
 
             <TabsContent value="portfolio">
-              {architectProjects.length > 0 ? (
+              {projects.length > 0 ? (
                 <div className="grid sm:grid-cols-2 gap-6">
-                  {architectProjects.map((project) => (
+                  {projects.map((project) => (
                     <Link
                       key={project.id}
                       href={`/portfolio/${project.id}`}
@@ -243,7 +286,7 @@ export default async function ArchitectPage({ params }: ArchitectPageProps) {
                     >
                       <div className="relative aspect-[4/3] overflow-hidden">
                         <Image
-                          src={project.image}
+                          src={project.image_url || "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=2070&auto=format&fit=crop"}
                           alt={project.title}
                           fill
                           className="object-cover transition-transform duration-500 group-hover:scale-105"
@@ -254,7 +297,9 @@ export default async function ArchitectPage({ params }: ArchitectPageProps) {
                       </div>
                       <div className="p-5">
                         <h3 className="font-semibold text-card-foreground mb-1">{project.title}</h3>
-                        <p className="text-sm text-muted-foreground">{project.location} &middot; {project.year}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {project.location} &middot; {project.year}
+                        </p>
                         <Badge variant="secondary" className="mt-3">
                           {project.category}
                         </Badge>
@@ -270,45 +315,44 @@ export default async function ArchitectPage({ params }: ArchitectPageProps) {
             </TabsContent>
 
             <TabsContent value="reviews">
-              <div className="space-y-4">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="bg-card rounded-xl border border-border p-6">
-                    <div className="flex items-start gap-4">
-                      <div className="h-12 w-12 rounded-full bg-secondary flex items-center justify-center shrink-0">
-                        <span className="text-lg font-medium text-secondary-foreground">
-                          {["JD", "SM", "AR"][i - 1]}
-                        </span>
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between mb-2">
-                          <h3 className="font-medium">
-                            {["John D.", "Sarah M.", "Alex R."][i - 1]}
-                          </h3>
-                          <div className="flex items-center gap-1">
-                            {Array.from({ length: 5 }).map((_, j) => (
-                              <Star
-                                key={j}
-                                className={`h-4 w-4 ${j < 5 ? "fill-primary text-primary" : "text-muted"}`}
-                              />
-                            ))}
-                          </div>
+              {reviews.length > 0 ? (
+                <div className="space-y-4">
+                  {reviews.map((review) => (
+                    <div key={review.id} className="bg-card rounded-xl border border-border p-6">
+                      <div className="flex items-start gap-4">
+                        <div className="h-12 w-12 rounded-full bg-secondary flex items-center justify-center shrink-0">
+                          <span className="text-lg font-medium text-secondary-foreground">
+                            {review.client_name?.[0] || 'C'}
+                          </span>
                         </div>
-                        <p className="text-sm text-muted-foreground mb-2">
-                          {["Residential Project", "Commercial Interior", "Home Renovation"][i - 1]} &middot;{" "}
-                          {["3 months ago", "6 months ago", "1 year ago"][i - 1]}
-                        </p>
-                        <p className="text-muted-foreground leading-relaxed">
-                          {[
-                            "Working with this architect was an absolute pleasure. They understood our vision from day one and delivered a home that exceeded our expectations.",
-                            "Exceptional attention to detail and creative problem-solving. Our office space transformation was remarkable.",
-                            "Professional, responsive, and incredibly talented. Would highly recommend to anyone looking for quality architectural work.",
-                          ][i - 1]}
-                        </p>
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between mb-2">
+                            <h3 className="font-medium">{review.title || 'Client Review'}</h3>
+                            <div className="flex items-center gap-1">
+                              {Array.from({ length: 5 }).map((_, j) => (
+                                <Star
+                                  key={j}
+                                  className={`h-4 w-4 ${j < review.rating ? "fill-primary text-primary" : "text-muted"}`}
+                                />
+                              ))}
+                            </div>
+                          </div>
+                          <p className="text-sm text-muted-foreground mb-2">
+                            {new Date(review.created_at).toLocaleDateString()}
+                          </p>
+                          <p className="text-muted-foreground leading-relaxed">
+                            {review.content}
+                          </p>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-16 bg-card rounded-xl border border-border">
+                  <p className="text-muted-foreground">No reviews yet.</p>
+                </div>
+              )}
             </TabsContent>
           </Tabs>
 

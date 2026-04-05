@@ -11,13 +11,44 @@ import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { Navigation } from '@/components/navigation'
 import { Footer } from '@/components/footer'
-import { blogPosts } from '@/lib/data'
+import { Footer } from '@/components/footer'
+import { getBlogPostById, addBlogComment, supabase, incrementBlogLikes } from '@/lib/supabase'
 
 export default function BlogDetailPage() {
   const params = useParams()
   const id = params.id as string
+  const [post, setPost] = useState<any>(null)
+  const [isLoading, setIsLoading] = useState(true)
   
-  const post = blogPosts.find((p) => p.id === id)
+  useEffect(() => {
+    async function loadPost() {
+      try {
+        const data = await getBlogPostById(supabase, id)
+        setPost(data)
+      } catch (error) {
+        console.error('Failed to load blog post:', error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    if (id) {
+      loadPost()
+    }
+  }, [id])
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <span className="text-muted-foreground flex items-center gap-2">
+          <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+          </svg>
+          Loading post...
+        </span>
+      </div>
+    )
+  }
 
   if (!post) {
     return (
@@ -33,34 +64,45 @@ export default function BlogDetailPage() {
   }
 
   return (
-    <BlogDetailContent post={post} />
+    <BlogDetailContent post={post} setPost={setPost} />
   )
 }
 
-function BlogDetailContent({ post }: { post: typeof blogPosts[0] }) {
-  const [likes, setLikes] = useState(post.likes)
+function BlogDetailContent({ post, setPost }: { post: any, setPost: any }) {
+  const [likes, setLikes] = useState(post.likes || 0)
   const [isLiked, setIsLiked] = useState(false)
-  const [comments, setComments] = useState(post.comments)
+  const [comments, setComments] = useState(post.blog_comments || [])
   const [newComment, setNewComment] = useState('')
   const [commentAuthor, setCommentAuthor] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const handleLike = () => {
-    setIsLiked(!isLiked)
-    setLikes(isLiked ? likes - 1 : likes + 1)
+  const handleLike = async () => {
+    if (isLiked) return;
+    setIsLiked(true)
+    setLikes(likes + 1)
+    try {
+      await incrementBlogLikes(supabase, post.id)
+    } catch (e) {
+      console.error(e)
+    }
   }
 
-  const handleAddComment = () => {
+  const handleAddComment = async () => {
     if (commentAuthor.trim() && newComment.trim()) {
-      const comment = {
-        id: `comment-${Date.now()}`,
-        author: commentAuthor,
-        content: newComment,
-        date: new Date().toLocaleDateString(),
-        likes: 0,
+      setIsSubmitting(true)
+      try {
+        const comment = await addBlogComment(supabase, post.id, {
+          author: commentAuthor,
+          content: newComment
+        })
+        setComments([...comments, comment])
+        setNewComment('')
+        setCommentAuthor('')
+      } catch (error) {
+        console.error('Failed to add comment', error)
+      } finally {
+        setIsSubmitting(false)
       }
-      setComments([...comments, comment])
-      setNewComment('')
-      setCommentAuthor('')
     }
   }
 
@@ -71,7 +113,7 @@ function BlogDetailContent({ post }: { post: typeof blogPosts[0] }) {
       {/* Hero Image */}
       <section className="relative h-96 w-full overflow-hidden">
         <Image
-          src={post.image}
+          src={post.image_url || 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&h=600&fit=crop'}
           alt={post.title}
           fill
           className="object-cover"
@@ -97,7 +139,7 @@ function BlogDetailContent({ post }: { post: typeof blogPosts[0] }) {
               <Badge>{post.category}</Badge>
               <span className="text-sm text-muted-foreground flex items-center gap-1">
                 <Calendar className="h-4 w-4" />
-                {new Date(post.publishedDate).toLocaleDateString()}
+                {new Date(post.published_date || post.created_at).toLocaleDateString()}
               </span>
             </div>
 
@@ -108,18 +150,18 @@ function BlogDetailContent({ post }: { post: typeof blogPosts[0] }) {
             {/* Author Info */}
             <div className="flex items-center gap-4 pb-6 border-b border-border">
               <Image
-                src={post.authorImage}
-                alt={post.author}
+                src={post.authorImage || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&h=200&fit=crop'}
+                alt={post.author || 'Author'}
                 width={56}
                 height={56}
                 className="rounded-full"
               />
               <div>
-                <Link href={`/architects/${post.authorId}`} className="font-semibold hover:text-primary transition-colors">
-                  {post.author}
+                <Link href={`/architects/${post.user_id}`} className="font-semibold hover:text-primary transition-colors">
+                  {post.author || 'Unknown'}
                 </Link>
                 <p className="text-sm text-muted-foreground">
-                  Posted on {new Date(post.publishedDate).toLocaleDateString()}
+                  Posted on {new Date(post.published_date || post.created_at).toLocaleDateString()}
                 </p>
               </div>
             </div>
@@ -127,7 +169,7 @@ function BlogDetailContent({ post }: { post: typeof blogPosts[0] }) {
 
           {/* Article Content */}
           <div className="prose prose-invert max-w-none mb-8">
-            {post.content.split('\n\n').map((paragraph, index) => (
+            {post.content?.split('\n\n').map((paragraph: string, index: number) => (
               <p key={index} className="text-muted-foreground leading-relaxed mb-4 whitespace-pre-line">
                 {paragraph}
               </p>
@@ -176,26 +218,26 @@ function BlogDetailContent({ post }: { post: typeof blogPosts[0] }) {
                     className="resize-none"
                     rows={4}
                   />
-                  <Button onClick={handleAddComment} className="w-full">
-                    Post Comment
+                  <Button onClick={handleAddComment} disabled={isSubmitting} className="w-full">
+                    {isSubmitting ? 'Posting...' : 'Post Comment'}
                   </Button>
                 </div>
               </div>
 
               {/* Comments List */}
               <div className="space-y-4">
-                {comments.map((comment) => (
+                {comments.map((comment: any) => (
                   <div key={comment.id} className="bg-card rounded-xl border border-border p-6">
                     <div className="flex items-start justify-between mb-3">
                       <div>
                         <p className="font-semibold">{comment.author}</p>
-                        <p className="text-sm text-muted-foreground">{comment.date}</p>
+                        <p className="text-sm text-muted-foreground">{new Date(comment.created_at).toLocaleDateString()}</p>
                       </div>
                     </div>
                     <p className="text-muted-foreground mb-3">{comment.content}</p>
                     <Button variant="ghost" size="sm">
                       <Heart className="h-4 w-4 mr-1" />
-                      {comment.likes}
+                      {comment.likes || 0}
                     </Button>
                   </div>
                 ))}

@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { useState } from "react"
+import { usePathname } from "next/navigation"
 import { Menu, X, User, LogOut, Briefcase, ChevronDown, UserCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -16,6 +17,7 @@ import {
 
 export function Navigation() {
   const [isOpen, setIsOpen] = useState(false)
+  const pathname = usePathname()
   const { user, role, profile, isLoading, signOut } = useAuth()
 
   const initials = profile
@@ -126,7 +128,7 @@ export function Navigation() {
             ) : !isLoading ? (
               <>
                 <Button variant="ghost" size="sm" asChild>
-                  <Link href="/login">Sign In</Link>
+                  <Link href={`/login?redirect=${encodeURIComponent(pathname || '/')}`}>Sign In</Link>
                 </Button>
                 <Button size="sm" asChild>
                   <Link href="/signup">Get Started</Link>
@@ -204,7 +206,7 @@ export function Navigation() {
               ) : !isLoading ? (
                 <div className="flex gap-4">
                   <Button variant="ghost" size="sm" asChild className="flex-1">
-                    <Link href="/login" onClick={() => setIsOpen(false)}>Sign In</Link>
+                    <Link href={`/login?redirect=${encodeURIComponent(pathname || '/')}`} onClick={() => setIsOpen(false)}>Sign In</Link>
                   </Button>
                   <Button size="sm" asChild className="flex-1">
                     <Link href="/signup" onClick={() => setIsOpen(false)}>Get Started</Link>

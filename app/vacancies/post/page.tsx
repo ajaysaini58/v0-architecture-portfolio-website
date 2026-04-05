@@ -53,7 +53,7 @@ export default function PostVacancyPage() {
         requirements: formData.requirements || null,
         apply_url: formData.applyUrl || null,
         apply_email: formData.applyEmail || null,
-        status: 'approved', // Goes live immediately
+        status: 'pending', // Goes to moderation
       })
 
       if (error) {

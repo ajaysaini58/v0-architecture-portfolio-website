@@ -9,21 +9,37 @@ import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Navigation } from '@/components/navigation'
 import { Footer } from '@/components/footer'
-import { blogPosts } from '@/lib/data'
+import { getBlogPosts, supabase } from '@/lib/supabase'
 import { useAuth } from '@/components/auth-provider'
 
 export default function BlogPage() {
   const { user } = useAuth()
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
+  const [posts, setPosts] = useState<any[]>([])
+  const [isLoading, setIsLoading] = useState(true)
 
-  const categories = Array.from(new Set(blogPosts.map(post => post.category)))
+  useEffect(() => {
+    async function loadPosts() {
+      try {
+        const data = await getBlogPosts(supabase, { status: 'approved' })
+        setPosts(data || [])
+      } catch (err) {
+        console.error('Failed to load blog posts:', err)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    loadPosts()
+  }, [])
 
-  const filteredPosts = blogPosts.filter(post => {
+  const categories = Array.from(new Set(posts.map(post => post.category).filter(Boolean)))
+
+  const filteredPosts = posts.filter(post => {
     const matchesSearch = post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       post.excerpt.toLowerCase().includes(searchQuery.toLowerCase())
     const matchesCategory = !selectedCategory || post.category === selectedCategory
-    return matchesSearch && matchesCategory && post.status === 'approved'
+    return matchesSearch && matchesCategory
   })
 
   return (
@@ -92,7 +108,17 @@ export default function BlogPage() {
       {/* Blog Posts Grid */}
       <section className="py-12">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          {filteredPosts.length > 0 ? (
+          {isLoading ? (
+            <div className="flex justify-center items-center py-12">
+              <span className="flex items-center gap-2 text-muted-foreground">
+                <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                </svg>
+                Loading articles...
+              </span>
+            </div>
+          ) : filteredPosts.length > 0 ? (
             <div className="grid gap-8">
               {filteredPosts.map((post) => (
                 <Link key={post.id} href={`/blog/${post.id}`}>
@@ -101,7 +127,7 @@ export default function BlogPage() {
                       {/* Image */}
                       <div className="relative h-64 sm:h-auto overflow-hidden">
                         <Image
-                          src={post.image}
+                          src={post.image_url || 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&h=600&fit=crop'}
                           alt={post.title}
                           fill
                           className="object-cover transition-transform duration-500 group-hover:scale-105"
@@ -126,16 +152,16 @@ export default function BlogPage() {
                         <div>
                           <div className="flex items-center gap-3 mb-4 pb-4 border-t border-border">
                             <Image
-                              src={post.authorImage}
-                              alt={post.author}
+                              src={post.authorImage || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&h=200&fit=crop'}
+                              alt={post.author || 'Author'}
                               width={40}
                               height={40}
                               className="rounded-full"
                             />
                             <div className="flex-1">
-                              <p className="font-medium text-sm">{post.author}</p>
+                              <p className="font-medium text-sm">{post.author || 'Unknown'}</p>
                               <p className="text-xs text-muted-foreground">
-                                {new Date(post.publishedDate).toLocaleDateString()}
+                                {new Date(post.published_date || post.created_at).toLocaleDateString()}
                               </p>
                             </div>
                           </div>
@@ -143,11 +169,11 @@ export default function BlogPage() {
                           <div className="flex items-center gap-4 text-sm text-muted-foreground">
                             <span className="flex items-center gap-1">
                               <Heart className="h-4 w-4" />
-                              {post.likes}
+                              {post.likes || 0}
                             </span>
                             <span className="flex items-center gap-1">
                               <MessageCircle className="h-4 w-4" />
-                              {post.comments.length}
+                              {post.comments ? post.comments.length : 0}
                             </span>
                             <span className="ml-auto group-hover:translate-x-1 transition-transform flex items-center gap-1">
                               Read More <ArrowRight className="h-4 w-4" />
