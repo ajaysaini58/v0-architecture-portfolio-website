@@ -1,6 +1,4 @@
-'use client'
-
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
@@ -10,7 +8,6 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { Navigation } from '@/components/navigation'
-import { Footer } from '@/components/footer'
 import { Footer } from '@/components/footer'
 import { getBlogPostById, addBlogComment, supabase, incrementBlogLikes } from '@/lib/supabase'
 
