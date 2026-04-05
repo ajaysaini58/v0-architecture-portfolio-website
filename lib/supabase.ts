@@ -7,10 +7,16 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 // Initialize Supabase client
 export const createSupabaseClient = () => {
   if (!supabaseUrl || !supabaseAnonKey) {
-    console.error('Missing Supabase Environment Variables: Please set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in your .env.local file.')
-    // Attempt to initialize with dummy strings only so UI doesn't crash statically,
-    // but subsequent queries will correctly log/fail rather than silently returning 'failed to fetch'
-    return createBrowserClient('https://placeholder.supabase.co', 'placeholder-key')
+    const missingKeys = [];
+    if (!supabaseUrl) missingKeys.push('NEXT_PUBLIC_SUPABASE_URL');
+    if (!supabaseAnonKey) missingKeys.push('NEXT_PUBLIC_SUPABASE_ANON_KEY');
+    
+    const errorMsg = `Missing Supabase Environment Variables: ${missingKeys.join(', ')}. Please set them in your .env.local or Vercel settings.`;
+    console.error(errorMsg);
+    
+    // Fallback to a non-existent URL that won't just 'fail to fetch' but indicate configuration issue
+    // In a real app we'd likely want to handle this at the UI level
+    return createBrowserClient('https://missing-supabase-config.local', 'missing-key')
   }
   return createBrowserClient(supabaseUrl, supabaseAnonKey)
 }

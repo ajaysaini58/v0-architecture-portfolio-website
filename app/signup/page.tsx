@@ -74,7 +74,15 @@ export default function SignupPage() {
       setEmailSent(true)
     } catch (err: any) {
       console.error("Signup error:", err)
-      setError(err.message || "An error occurred during signup. Please try again.")
+      
+      let errorMessage = err.message || "An error occurred during signup. Please try again."
+      
+      // Provide clearer guidance for common setup issues
+      if (errorMessage.includes("fetch") || errorMessage.includes("missing-supabase-config")) {
+        errorMessage = "Connection failed. Please ensure your Supabase environment variables are correctly set in .env.local and that you have a stable internet connection."
+      }
+      
+      setError(errorMessage)
     } finally {
       setIsLoading(false)
     }

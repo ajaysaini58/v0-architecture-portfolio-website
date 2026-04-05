@@ -32,6 +32,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { z } from "zod"
+
+const projectSchema = z.object({
+  projectType: z.string().min(1, "Project type is required"),
+  title: z.string().min(5, "Title must be at least 5 characters"),
+  description: z.string().min(20, "Description must be at least 20 characters"),
+  requirements: z.string().optional(),
+  location: z.string().min(3, "Location is required"),
+  budget: z.string().min(1, "Budget range is required"),
+  timeline: z.string().min(1, "Expected duration is required"),
+  deadline: z.string().optional(),
+})
+
+type ProjectFormData = z.infer<typeof projectSchema>
 
 const projectTypes = [
   { value: "residential", label: "Residential", icon: "🏠" },
@@ -83,6 +97,7 @@ export default function PostProjectPage() {
     deadline: "",
     files: [] as string[],
   })
+  const [errors, setErrors] = useState<Partial<Record<keyof ProjectFormData, string>>>({})
 
   const updateFormData = (field: string, value: string | string[]) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
@@ -105,7 +120,28 @@ export default function PostProjectPage() {
 
   const handleSubmit = async () => {
     if (!user) return
+    
+    // Validate with Zod
+    const result = projectSchema.safeParse(formData)
+    if (!result.success) {
+      const fieldErrors: any = {}
+      result.error.issues.forEach((issue) => {
+        fieldErrors[issue.path[0]] = issue.message
+      })
+      setErrors(fieldErrors)
+      
+      // Find the first step with an error and jump to it
+      if (fieldErrors.projectType) setCurrentStep(1)
+      else if (fieldErrors.title || fieldErrors.description) setCurrentStep(2)
+      else if (fieldErrors.location || fieldErrors.budget) setCurrentStep(3)
+      else if (fieldErrors.timeline) setCurrentStep(4)
+      
+      return
+    }
+
     setIsSubmitting(true)
+    setErrors({})
+    
     try {
       const { error } = await supabase.from('project_bids').insert({
         user_id: user.id,
@@ -202,6 +238,7 @@ export default function PostProjectPage() {
                 )}
               >
                 <button
+                  type="button"
                   onClick={() => step.id < currentStep && setCurrentStep(step.id)}
                   className={cn(
                     "flex items-center gap-2 px-3 py-2 rounded-lg transition-colors",
@@ -248,6 +285,7 @@ export default function PostProjectPage() {
                 {projectTypes.map((type) => (
                   <button
                     key={type.value}
+                    type="button"
                     onClick={() => updateFormData("projectType", type.value)}
                     className={cn(
                       "flex items-center gap-4 p-5 rounded-xl border-2 transition-all text-left",
@@ -261,6 +299,7 @@ export default function PostProjectPage() {
                   </button>
                 ))}
               </div>
+              {errors.projectType && <p className="text-sm text-destructive mt-2">{errors.projectType}</p>}
             </div>
           )}
 
@@ -288,6 +327,7 @@ export default function PostProjectPage() {
                     placeholder="e.g., Modern Family Home in Malibu"
                     className="w-full px-4 py-3 rounded-lg border border-input bg-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                   />
+                  {errors.title && <p className="text-sm text-destructive mt-1">{errors.title}</p>}
                 </div>
 
                 <div>
@@ -301,6 +341,7 @@ export default function PostProjectPage() {
                     rows={5}
                     className="resize-none"
                   />
+                  {errors.description && <p className="text-sm text-destructive mt-1">{errors.description}</p>}
                 </div>
 
                 <div>
@@ -360,6 +401,7 @@ export default function PostProjectPage() {
                       placeholder="City, State or Full Address"
                       className="w-full pl-12 pr-4 py-3 rounded-lg border border-input bg-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                     />
+                    {errors.location && <p className="text-sm text-destructive mt-1">{errors.location}</p>}
                   </div>
                 </div>
 
@@ -383,6 +425,7 @@ export default function PostProjectPage() {
                       ))}
                     </SelectContent>
                   </Select>
+                  {errors.budget && <p className="text-sm text-destructive mt-1">{errors.budget}</p>}
                   <p className="text-xs text-muted-foreground mt-2 flex items-start gap-1">
                     <Info className="h-3 w-3 mt-0.5 shrink-0" />
                     This is an estimate. Final costs will be discussed with your chosen architect.
@@ -413,6 +456,7 @@ export default function PostProjectPage() {
                     {timelines.map((timeline) => (
                       <button
                         key={timeline}
+                        type="button"
                         onClick={() => updateFormData("timeline", timeline)}
                         className={cn(
                           "flex items-center gap-3 p-4 rounded-xl border-2 transition-all text-left",
@@ -426,6 +470,7 @@ export default function PostProjectPage() {
                       </button>
                     ))}
                   </div>
+                  {errors.timeline && <p className="text-sm text-destructive mt-1">{errors.timeline}</p>}
                 </div>
 
                 <div>
@@ -516,6 +561,7 @@ export default function PostProjectPage() {
           <div className="flex justify-between mt-10 pt-6 border-t border-border">
             <Button
               variant="outline"
+              type="button"
               onClick={() => setCurrentStep((prev) => prev - 1)}
               disabled={currentStep === 1}
             >
@@ -525,6 +571,7 @@ export default function PostProjectPage() {
 
             {currentStep < 5 ? (
               <Button
+                type="button"
                 onClick={() => setCurrentStep((prev) => prev + 1)}
                 disabled={!canProceed()}
               >
@@ -532,9 +579,21 @@ export default function PostProjectPage() {
                 <ArrowRight className="h-4 w-4 ml-2" />
               </Button>
             ) : (
-              <Button onClick={handleSubmit} disabled={isSubmitting}>
-                <CheckCircle className="h-4 w-4 mr-2" />
-                {isSubmitting ? 'Posting...' : 'Post Project'}
+              <Button type="button" onClick={handleSubmit} disabled={isSubmitting}>
+                {isSubmitting ? (
+                  <>
+                    <svg className="animate-spin h-4 w-4 mr-2" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    </svg>
+                    Posting...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                    Post Project
+                  </>
+                )}
               </Button>
             )}
           </div>
