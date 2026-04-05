@@ -16,7 +16,7 @@ export const createSupabaseClient = () => {
     
     // Fallback to a non-existent URL that won't just 'fail to fetch' but indicate configuration issue
     // In a real app we'd likely want to handle this at the UI level
-    return createBrowserClient('https://missing-supabase-config.local', 'missing-key')
+    return createBrowserClient('https://zzzz-missing-supabase-config.supabase.co', 'missing-key')
   }
   return createBrowserClient(supabaseUrl, supabaseAnonKey)
 }
