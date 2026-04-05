@@ -16,7 +16,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: 'Architure | Find and Hire Top Architects',
+  title: 'DByARCH | Find and Hire Top Architects',
   description: 'Connect with world-class architects. Browse portfolios, post projects, and find the perfect architect for your vision.',
   generator: 'v0.app',
   icons: {

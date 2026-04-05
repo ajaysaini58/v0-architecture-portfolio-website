@@ -1,4 +1,4 @@
-// TypeScript Interfaces for Architure Platform - Supabase Database Integration
+// TypeScript Interfaces for DByARCH Platform - Supabase Database Integration
 // These interfaces match the data structures used throughout the application
 
 // ============================================================================

@@ -1,4 +1,4 @@
--- Architure Platform - Supabase Database Schema
+-- DByARCH Platform - Supabase Database Schema
 -- This SQL creates the database structure for the architecture platform
 -- Execute these migrations in your Supabase project
 

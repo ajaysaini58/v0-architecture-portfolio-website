@@ -1,6 +1,6 @@
-# Architure Platform - Supabase Integration Guide
+# DByARCH Platform - Supabase Integration Guide
 
-This guide walks you through setting up the Architure platform with Supabase database integration.
+This guide walks you through setting up the DByARCH platform with Supabase database integration.
 
 ## Prerequisites
 

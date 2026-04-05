@@ -262,8 +262,8 @@ function ContactForm() {
             </div>
             <div>
               <h3 className="font-medium mb-1">Email Us</h3>
-              <p className="text-muted-foreground text-sm">hello@architure.com</p>
-              <p className="text-muted-foreground text-sm">support@architure.com</p>
+              <p className="text-muted-foreground text-sm">hello@dbyarch.com</p>
+              <p className="text-muted-foreground text-sm">support@dbyarch.com</p>
             </div>
           </div>
 
@@ -370,7 +370,7 @@ export default function ContactPage() {
                 a: "Browse our architect directory, filter by specialty and location, review portfolios, and reach out to architects whose style matches your vision.",
               },
               {
-                q: "How much does it cost to use Architure?",
+                q: "How much does it cost to use DByARCH?",
                 a: "It's free for clients to browse architects and post projects. Architects pay a subscription fee to list their services on the platform.",
               },
               {

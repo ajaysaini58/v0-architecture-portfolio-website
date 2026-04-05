@@ -8,7 +8,7 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
           {/* Brand */}
           <div className="space-y-4">
-            <h2 className="font-serif text-2xl">Architure</h2>
+            <h2 className="font-serif text-2xl">DByARCH</h2>
             <p className="text-sm text-background/70 leading-relaxed">
               Connecting visionary clients with world-class architects. Your dream space is just a conversation away.
             </p>
@@ -90,7 +90,7 @@ export function Footer() {
             <ul className="space-y-3">
               <li className="flex items-center gap-3 text-sm text-background/70">
                 <Mail className="h-4 w-4 shrink-0" />
-                <span>hello@architure.com</span>
+                <span>hello@dbyarch.com</span>
               </li>
               <li className="flex items-center gap-3 text-sm text-background/70">
                 <Phone className="h-4 w-4 shrink-0" />
@@ -106,7 +106,7 @@ export function Footer() {
 
         <div className="border-t border-background/10 mt-12 pt-8 flex flex-col sm:flex-row justify-between items-center gap-4">
           <p className="text-xs text-background/50">
-            &copy; {new Date().getFullYear()} Architure. All rights reserved.
+            &copy; {new Date().getFullYear()} DByARCH. All rights reserved.
           </p>
           <div className="flex gap-6">
             <Link href="/privacy" className="text-xs text-background/50 hover:text-background/70 transition-colors">

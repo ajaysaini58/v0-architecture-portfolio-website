@@ -29,7 +29,7 @@ export default function ForgotPasswordPage() {
         <div className="text-center">
           <Link href="/" className="inline-flex items-center gap-2 mb-8">
             <Building2 className="h-8 w-8 text-primary" />
-            <span className="font-serif text-2xl tracking-tight">Architure</span>
+            <span className="font-serif text-2xl tracking-tight">DByARCH</span>
           </Link>
           
           {!isSubmitted ? (

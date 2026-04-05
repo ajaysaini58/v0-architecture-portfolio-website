@@ -14,7 +14,7 @@ export const architects = [
     featured: true,
     hourlyRate: 250,
     minimumProjectBudget: 75000,
-    email: "sarah.chen@architure.com",
+    email: "sarah.chen@dbyarch.com",
     phone: "+1 (415) 555-0123",
     social: {
       instagram: "https://instagram.com/sarahchenarch",
@@ -38,7 +38,7 @@ export const architects = [
     featured: true,
     hourlyRate: 300,
     minimumProjectBudget: 150000,
-    email: "marcus.weber@architure.com",
+    email: "marcus.weber@dbyarch.com",
     phone: "+1 (212) 555-0456",
     social: {
       instagram: "https://instagram.com/marcusweberdesign",
@@ -62,7 +62,7 @@ export const architects = [
     featured: true,
     hourlyRate: 275,
     minimumProjectBudget: 100000,
-    email: "elena.rodriguez@architure.com",
+    email: "elena.rodriguez@dbyarch.com",
     phone: "+1 (310) 555-0789",
     social: {
       instagram: "https://instagram.com/elenarodriguezarch",
@@ -86,7 +86,7 @@ export const architects = [
     featured: false,
     hourlyRate: 225,
     minimumProjectBudget: 125000,
-    email: "james.okonkwo@architure.com",
+    email: "james.okonkwo@dbyarch.com",
     phone: "+1 (312) 555-0321",
     social: {
       instagram: "https://instagram.com/jamesokonkwo",
@@ -110,7 +110,7 @@ export const architects = [
     featured: false,
     hourlyRate: 260,
     minimumProjectBudget: 85000,
-    email: "ana.silva@architure.com",
+    email: "ana.silva@dbyarch.com",
     phone: "+1 (305) 555-0654",
     social: {
       instagram: "https://instagram.com/anasilvaarch",
@@ -134,7 +134,7 @@ export const architects = [
     featured: true,
     hourlyRate: 280,
     minimumProjectBudget: 95000,
-    email: "david.kim@architure.com",
+    email: "david.kim@dbyarch.com",
     phone: "+1 (206) 555-0987",
     social: {
       instagram: "https://instagram.com/davidkimarch",
