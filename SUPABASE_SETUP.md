@@ -1,12 +1,12 @@
-# DByARCH Platform - Supabase Integration Guide
+# Architect Networking Platform - Supabase Setup Guide
 
-This guide walks you through setting up the DByARCH platform with Supabase database integration.
+Complete guide for setting up the professional architect networking platform with Supabase.
 
 ## Prerequisites
 
 - Supabase project created at [supabase.com](https://supabase.com)
-- Next.js project with environment variables configured
-- Node.js and npm/pnpm installed
+- Next.js 16+ project
+- Environment variables ready to configure
 
 ## Step 1: Environment Variables
 
@@ -18,64 +18,80 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 ```
 
-Get these values from your Supabase project settings:
-- Go to Settings > API
-- Copy the Project URL and anon key
-- Copy the service role key (keep this secret, only for server-side operations)
+Get these from your Supabase project:
+- Settings > API > Project URL
+- Settings > API > Project API Keys > anon (public)
+- Settings > API > Project API Keys > service_role (keep secret - server only)
 
-## Step 2: Install Supabase Client
-
-```bash
-npm install @supabase/supabase-js @supabase/ssr
-```
-
-## Step 3: Create Database Schema
+## Step 2: Create Database Schema
 
 1. Go to your Supabase project SQL editor
-2. Execute the SQL from `scripts/supabase-schema.sql`
-3. This creates all necessary tables, indexes, and RLS policies
+2. Copy the entire contents of `supabase/migrations/001_init_schema.sql`
+3. Create a new query and paste the contents
+4. Execute the query
 
-## File Structure
+This creates all tables, enums, indexes, triggers, and Row Level Security policies.
 
-### TypeScript Interfaces (`lib/types.ts`)
+## Step 3: Verify Installation
 
-Contains all TypeScript interfaces matching your data structure:
-- `Architect` - Architect profiles with social links and pricing
-- `PortfolioProject` - Portfolio projects
-- `BlogPost` - Blog posts with comments
-- `ProjectBid` - Project listings from clients
-- `ArchitectBid` - Architect proposals
-- `User` - User profiles
-- `Review` - Client reviews
-- `ContactMessage` - Public contact form submissions
+Run this query to verify all tables were created:
 
-### Database Schema (`scripts/supabase-schema.sql`)
+```sql
+SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' ORDER BY table_name;
+```
 
-Complete SQL schema including:
-- `architects` - Architect profiles
-- `portfolio_projects` - Project portfolios
-- `blog_posts` - Blog articles
-- `blog_comments` - Blog post comments
-- `project_bids` - Client project listings
-- `architect_bids` - Architect proposals
-- `reviews` - Client reviews
-- `conversations` - Message conversations
-- `direct_messages` - Private messages
-- `contact_messages` - Public contact form
-- `user_profiles` - User account info
+You should see 20+ tables created.
 
-### Utilities (`lib/supabase.ts`)
+## Database Schema Overview
 
-Helper functions for common queries:
-- `getArchitects()` - Fetch featured architects
-- `getArchitectById()` - Get specific architect
-- `searchArchitects()` - Search with filters
-- `getPortfolioProjects()` - Fetch all projects
-- `getBlogPosts()` - Fetch approved blog posts
-- `getProjectBids()` - Fetch project listings
-- `getArchitectBidsForProject()` - Get proposals for a project
-- `submitArchitectBid()` - Submit a proposal
-- And many more...
+### Core Tables
+
+**Users Table** (`users`)
+- Extends Supabase auth.users
+- Stores: email, full_name, role, avatar, bio, phone, location, verified status
+- Roles: architect, client, company_hr, student, admin
+
+**Architect Profiles** (`architect_profiles`)
+- Specialties, experience, hourly rates, portfolio count, ratings, availability
+
+**Client Profiles** (`client_profiles`)
+- Company info, company type, industry, website, spending history
+
+**Student Profiles** (`student_profiles`)
+- University, degree, interests, internship/mentorship seeking
+
+**HR Profiles** (`hr_profiles`)
+- Company recruiting info, job postings, hiring history
+
+**Content Tables**
+- `portfolios` - Architect portfolio items with images and tags
+- `blog_posts` - Blog articles with draft/published workflow
+- `blog_comments` - Comments on blog posts
+- `blog_likes` - Likes tracking for blog posts
+
+**Project & Bidding**
+- `projects` - Project postings by clients
+- `bids` - Architect proposals on projects
+- `reviews` - Ratings and reviews for architects
+
+**Communication**
+- `messages` - Direct messages between users
+- `conversations` - Conversation threads
+- `connections` - User follows/connections
+
+### Indexes for Performance
+
+All frequently-queried columns have indexes:
+- User role and email lookups
+- Status and category filters on projects/blogs
+- User relationship queries
+
+### Row Level Security (RLS)
+
+Every table has RLS enabled:
+- **Public data**: Users, architects, clients, portfolios, published blog posts, projects
+- **Private data**: Messages, bids, draft content only visible to owner/participants
+- **Owner-only modifications**: Users can only modify their own data
 
 ## Usage Examples
 
