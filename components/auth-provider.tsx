@@ -1,139 +1,207 @@
-"use client";
+'use client';
 
-import React, { createContext, useContext, useEffect, useState } from "react";
-import { createSupabaseClient } from "@/lib/supabase";
-
-export type UserRole = "admin" | "architect" | "client" | "hr" | null;
-
-interface UserProfile {
-  id: string;
-  firstName: string;
-  lastName: string;
-  avatarUrl?: string;
-  company?: string;
-  userType: string;
-}
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
+import { createSupabaseClient, getCurrentUser } from '@/lib/supabase';
+import type { User, UserRole } from '@/lib/types';
 
 interface AuthContextType {
-  user: any | null;
-  role: UserRole;
-  profile: UserProfile | null;
+  user: User | null;
+  authUser: any | null;
+  role: UserRole | null;
   isLoading: boolean;
+  isAuthenticated: boolean;
   signOut: () => Promise<void>;
+  refreshAuth: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
+  authUser: null,
   role: null,
-  profile: null,
   isLoading: true,
+  isAuthenticated: false,
   signOut: async () => {},
+  refreshAuth: async () => {},
 });
 
-export const useAuth = () => useContext(AuthContext);
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within AuthProvider');
+  }
+  return context;
+};
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<any | null>(null);
-  const [role, setRole] = useState<UserRole>(null);
-  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const router = useRouter();
+  const [user, setUser] = useState<User | null>(null);
+  const [authUser, setAuthUser] = useState<any | null>(null);
+  const [role, setRole] = useState<UserRole | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   const hasSupabase = !!process.env.NEXT_PUBLIC_SUPABASE_URL;
 
-  const fetchProfile = async (userId: string) => {
-    const supabase = createSupabaseClient();
-    const { data } = await supabase
-      .from("user_profiles")
-      .select("*")
-      .eq("user_id", userId)
-      .single();
-    
-    if (data) {
-      setProfile({
-        id: data.id,
-        firstName: data.first_name || "",
-        lastName: data.last_name || "",
-        avatarUrl: data.avatar_url,
-        company: data.company_name,
-        userType: data.user_type,
-      });
-      setRole(data.user_type as UserRole);
-    }
-    return data;
-  };
+  const fetchUserProfile = useCallback(async (userId: string) => {
+    if (!hasSupabase) return null;
 
-  useEffect(() => {
+    try {
+      const supabase = createSupabaseClient();
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      if (error) {
+        console.error('Error fetching user profile:', error);
+        return null;
+      }
+
+      if (data) {
+        setUser(data as User);
+        setRole(data.role as UserRole);
+        return data;
+      }
+    } catch (error) {
+      console.error('Failed to fetch user profile:', error);
+    }
+    return null;
+  }, []);
+
+  const refreshAuth = useCallback(async () => {
     if (!hasSupabase) {
       setIsLoading(false);
       return;
     }
 
-    const supabase = createSupabaseClient();
-    
-    const checkUser = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        
-        if (session?.user) {
-          setUser(session.user);
-          const profileData = await fetchProfile(session.user.id);
-          
-          if (!profileData) {
-            // Fallback role detection
-            if (session.user.email?.includes('admin')) {
-              setRole('admin');
-            } else {
-              setRole('client');
-            }
-          }
-        } else {
-          setUser(null);
-          setRole(null);
-          setProfile(null);
-        }
-      } catch (error) {
-        console.error("Auth initialization error:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+    try {
+      setIsLoading(true);
+      const supabase = createSupabaseClient();
 
-    checkUser();
+      const {
+        data: { user: authUserData },
+        error: authError,
+      } = await supabase.auth.getUser();
 
-    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_OUT') {
+      if (authError || !authUserData) {
+        setAuthUser(null);
         setUser(null);
         setRole(null);
-        setProfile(null);
         return;
       }
-      
+
+      setAuthUser(authUserData);
+      await fetchUserProfile(authUserData.id);
+    } catch (error) {
+      console.error('Error refreshing auth:', error);
+      setAuthUser(null);
+      setUser(null);
+      setRole(null);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [hasSupabase, fetchUserProfile]);
+
+  useEffect(() => {
+    refreshAuth();
+  }, [refreshAuth]);
+
+  useEffect(() => {
+    if (!hasSupabase) return;
+
+    const supabase = createSupabaseClient();
+
+    // Subscribe to auth state changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (session?.user) {
-        setUser(session.user);
-        await fetchProfile(session.user.id);
+        setAuthUser(session.user);
+        await fetchUserProfile(session.user.id);
       } else {
+        setAuthUser(null);
         setUser(null);
         setRole(null);
-        setProfile(null);
       }
+      setIsLoading(false);
     });
 
     return () => {
-      authListener.subscription.unsubscribe();
+      subscription?.unsubscribe();
     };
-  }, [hasSupabase]);
+  }, [hasSupabase, fetchUserProfile]);
 
   const signOut = async () => {
-    const supabase = createSupabaseClient();
-    await supabase.auth.signOut();
-    setUser(null);
-    setRole(null);
-    setProfile(null);
+    if (!hasSupabase) return;
+
+    try {
+      const supabase = createSupabaseClient();
+      await supabase.auth.signOut();
+      setAuthUser(null);
+      setUser(null);
+      setRole(null);
+      router.push('/');
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
   };
 
-  return (
-    <AuthContext.Provider value={{ user, role, profile, isLoading, signOut }}>
-      {children}
-    </AuthContext.Provider>
-  );
+  const value: AuthContextType = {
+    user,
+    authUser,
+    role,
+    isLoading,
+    isAuthenticated: !!authUser && !!user,
+    signOut,
+    refreshAuth,
+  };
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+}
+
+// Hook to check if user has specific role
+export function useHasRole(requiredRoles: UserRole | UserRole[]) {
+  const { role, isLoading } = useAuth();
+
+  if (isLoading) return undefined;
+
+  const roles = Array.isArray(requiredRoles) ? requiredRoles : [requiredRoles];
+  return role ? roles.includes(role) : false;
+}
+
+// Hook to require authentication
+export function useRequireAuth() {
+  const router = useRouter();
+  const { isAuthenticated, isLoading } = useAuth();
+
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      router.push('/signin');
+    }
+  }, [isAuthenticated, isLoading, router]);
+
+  return { isAuthenticated, isLoading };
+}
+
+// Hook to require specific role
+export function useRequireRole(requiredRoles: UserRole | UserRole[]) {
+  const router = useRouter();
+  const { isAuthenticated, role, isLoading } = useAuth();
+
+  useEffect(() => {
+    if (isLoading) return;
+
+    if (!isAuthenticated) {
+      router.push('/signin');
+      return;
+    }
+
+    const roles = Array.isArray(requiredRoles) ? requiredRoles : [requiredRoles];
+    if (!role || !roles.includes(role)) {
+      router.push('/unauthorized');
+    }
+  }, [isAuthenticated, role, isLoading, requiredRoles, router]);
+
+  return { isAuthenticated, role, isLoading };
 }

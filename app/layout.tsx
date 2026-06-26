@@ -16,8 +16,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: 'DByARCH | Find and Hire Top Architects',
-  description: 'Connect with world-class architects. Browse portfolios, post projects, and find the perfect architect for your vision.',
+  title: 'ArchConnect | Professional Architect Networking Platform',
+  description: 'Connect architects with clients. Share portfolios, post projects, bid on work, and build your professional network in architecture.',
   generator: 'v0.app',
   icons: {
     icon: [
@@ -44,8 +44,8 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
-      <body className={`${inter.variable} ${dmSerif.variable} font-sans antialiased`}>
+    <html lang="en" className="bg-background">
+      <body className={`${inter.variable} ${dmSerif.variable} font-sans antialiased bg-background`}>
         <AuthProvider>
           {children}
           <Analytics />

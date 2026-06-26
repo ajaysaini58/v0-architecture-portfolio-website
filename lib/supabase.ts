@@ -1,8 +1,25 @@
 // Supabase client configuration and utility functions
-import { createBrowserClient } from '@supabase/ssr'
+import { createBrowserClient } from '@supabase/ssr';
+import type { SupabaseClient } from '@supabase/supabase-js';
+import type {
+  User,
+  ArchitectProfile,
+  ClientProfile,
+  StudentProfile,
+  HRProfile,
+  Portfolio,
+  BlogPost,
+  BlogComment,
+  Project,
+  Bid,
+  Message,
+  Review,
+  ArchitectSearchFilters,
+  ProjectSearchFilters,
+} from './types';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 // Initialize Supabase client
 export const createSupabaseClient = () => {
@@ -10,18 +27,16 @@ export const createSupabaseClient = () => {
     const missingKeys = [];
     if (!supabaseUrl) missingKeys.push('NEXT_PUBLIC_SUPABASE_URL');
     if (!supabaseAnonKey) missingKeys.push('NEXT_PUBLIC_SUPABASE_ANON_KEY');
-    
+
     const errorMsg = `Missing Supabase Environment Variables: ${missingKeys.join(', ')}. Please set them in your .env.local or Vercel settings.`;
     console.error(errorMsg);
-    
-    // Fallback to a non-existent URL that won't just 'fail to fetch' but indicate configuration issue
-    // In a real app we'd likely want to handle this at the UI level
-    return createBrowserClient('https://zzzz-missing-supabase-config.supabase.co', 'missing-key')
-  }
-  return createBrowserClient(supabaseUrl, supabaseAnonKey)
-}
 
-export const supabase = createSupabaseClient()
+    return createBrowserClient('https://zzzz-missing-supabase-config.supabase.co', 'missing-key');
+  }
+  return createBrowserClient(supabaseUrl, supabaseAnonKey);
+};
+
+export const supabase = createSupabaseClient();
 
 // ============================================================================
 // AUTH HELPERS
@@ -31,741 +46,600 @@ export async function signUpUser(email: string, password: string) {
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
-  })
-  if (error) throw error
-  return data
+  });
+  if (error) throw error;
+  return data;
 }
 
 export async function signInUser(email: string, password: string) {
   const { data, error } = await supabase.auth.signInWithPassword({
     email,
     password,
-  })
-  if (error) throw error
-  return data
+  });
+  if (error) throw error;
+  return data;
 }
 
 export async function signOutUser() {
-  const { error } = await supabase.auth.signOut()
-  if (error) throw error
+  const { error } = await supabase.auth.signOut();
+  if (error) throw error;
+}
+
+export async function getCurrentUser() {
+  const { data: { user }, error } = await supabase.auth.getUser();
+  if (error) throw error;
+  return user;
 }
 
 // ============================================================================
-// USER PROFILE QUERIES
+// USER PROFILE HELPERS
 // ============================================================================
 
-export async function createUserProfile(profile: {
-  user_id: string
-  user_type: 'architect' | 'client' | 'hr' | 'admin'
-  first_name: string
-  last_name: string
-  company_name?: string
-}) {
-  const { data, error } = await supabase
-    .from('user_profiles')
-    .insert(profile)
-    .select()
-    .single()
-
-  if (error) throw error
-  return data
-}
-
-export async function getUserProfile(supabaseClient: any, userId: string) {
-  const { data, error } = await supabaseClient
-    .from('user_profiles')
-    .select('*')
-    .eq('user_id', userId)
-    .single()
-  
-  if (error) throw error
-  return data
-}
-
-export async function updateUserProfile(
-  supabaseClient: any,
+export async function createUserProfile(
   userId: string,
-  updates: Record<string, any>
+  email: string,
+  full_name: string,
+  role: string
 ) {
-  const { data, error } = await supabaseClient
-    .from('user_profiles')
+  const { data, error } = await supabase
+    .from('users')
+    .insert({
+      id: userId,
+      email,
+      full_name,
+      role,
+    })
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data as User;
+}
+
+export async function getUserProfile(userId: string) {
+  const { data, error } = await supabase
+    .from('users')
+    .select('*')
+    .eq('id', userId)
+    .single();
+
+  if (error) throw error;
+  return data as User;
+}
+
+export async function updateUserProfile(userId: string, updates: Partial<User>) {
+  const { data, error } = await supabase
+    .from('users')
     .update(updates)
-    .eq('user_id', userId)
+    .eq('id', userId)
     .select()
-    .single()
-  
-  if (error) throw error
-  return data
+    .single();
+
+  if (error) throw error;
+  return data as User;
 }
 
 // ============================================================================
-// ARCHITECT QUERIES
+// ARCHITECT PROFILE HELPERS
 // ============================================================================
 
-export async function createArchitectProfile(profile: {
-  user_id: string
-  name: string
-  title?: string
-  location: string
-  email: string
-  bio?: string
-  specialties?: string[]
-  hourly_rate?: number
-  minimum_project_budget?: number
-  image_url?: string
-  instagram_url?: string
-  linkedin_url?: string
+export async function createArchitectProfile(
+  userId: string,
+  specialties: string[],
+  experience_years?: number,
+  hourly_rate?: number,
   website_url?: string
-  twitter_url?: string
-}) {
+) {
   const { data, error } = await supabase
-    .from('architects')
-    .insert(profile)
+    .from('architect_profiles')
+    .insert({
+      user_id: userId,
+      specialties,
+      experience_years,
+      hourly_rate,
+      website_url,
+    })
     .select()
-    .single()
+    .single();
 
-  if (error) throw error
-  return data
+  if (error) throw error;
+  return data as ArchitectProfile;
 }
 
-export async function getArchitects(supabaseClient: any) {
-  const { data, error } = await supabaseClient
-    .from('architects')
-    .select('*')
-    .eq('featured', true)
-    .limit(10)
-  
-  if (error) throw error
-  return data
-}
-
-export async function getArchitectById(supabaseClient: any, id: string) {
-  const { data, error } = await supabaseClient
-    .from('architects')
-    .select('*')
-    .eq('id', id)
-    .single()
-  
-  if (error) throw error
-  return data
-}
-
-export async function getArchitectByUserId(userId: string) {
+export async function getArchitectProfile(userId: string) {
   const { data, error } = await supabase
-    .from('architects')
-    .select('*')
+    .from('architect_profiles')
+    .select('*, user:users(*)')
     .eq('user_id', userId)
-    .single()
+    .single();
 
-  if (error && error.code !== 'PGRST116') throw error
-  return data
+  if (error) throw error;
+  return data as ArchitectProfile;
 }
 
 export async function updateArchitectProfile(
   userId: string,
-  updates: Record<string, any>
+  updates: Partial<ArchitectProfile>
 ) {
   const { data, error } = await supabase
-    .from('architects')
+    .from('architect_profiles')
     .update(updates)
     .eq('user_id', userId)
     .select()
-    .single()
+    .single();
 
-  if (error) throw error
-  return data
+  if (error) throw error;
+  return data as ArchitectProfile;
 }
 
-export async function searchArchitects(
-  supabaseClient: any,
-  filters: {
-    specialty?: string
-    minRating?: number
-    maxRate?: number
-    location?: string
+export async function searchArchitects(filters: ArchitectSearchFilters) {
+  let query = supabase
+    .from('architect_profiles')
+    .select('*, user:users(*)')
+    .eq('is_available', true);
+
+  if (filters.min_rating) {
+    query = query.gte('rating', filters.min_rating);
   }
-) {
-  let query = supabaseClient.from('architects').select('*')
-  
-  if (filters.specialty) {
-    query = query.contains('specialties', [filters.specialty])
+
+  if (filters.max_hourly_rate) {
+    query = query.lte('hourly_rate', filters.max_hourly_rate);
   }
-  if (filters.minRating) {
-    query = query.gte('rating', filters.minRating)
+
+  if (filters.specialties && filters.specialties.length > 0) {
+    // Using overlaps operator for array columns
+    query = query.or(
+      filters.specialties.map(s => `specialties.cs.{${s}}`).join(',')
+    );
   }
-  if (filters.maxRate) {
-    query = query.lte('hourly_rate', filters.maxRate)
-  }
-  if (filters.location) {
-    query = query.ilike('location', `%${filters.location}%`)
-  }
-  
-  const { data, error } = await query
-  if (error) throw error
-  return data
+
+  const { data, error } = await query.order('rating', { ascending: false });
+
+  if (error) throw error;
+  return data as ArchitectProfile[];
+}
+
+export async function getFeaturedArchitects(limit = 6) {
+  const { data, error } = await supabase
+    .from('architect_profiles')
+    .select('*, user:users(*)')
+    .eq('is_available', true)
+    .eq('verified_badge', true)
+    .gte('rating', 4.5)
+    .order('rating', { ascending: false })
+    .limit(limit);
+
+  if (error) throw error;
+  return data as ArchitectProfile[];
+}
+
+export async function getArchitectById(supabaseClient: any, architectId: string) {
+  const { data, error } = await supabaseClient
+    .from('architect_profiles')
+    .select('*, user:users(*)')
+    .eq('user_id', architectId)
+    .single();
+
+  if (error) throw error;
+  return data as ArchitectProfile;
 }
 
 // ============================================================================
-// PORTFOLIO QUERIES
+// CLIENT PROFILE HELPERS
 // ============================================================================
 
-export async function getPortfolioProjects(supabaseClient: any) {
-  const { data, error } = await supabaseClient
-    .from('portfolio_projects')
-    .select('*, architects(name)')
-    .order('created_at', { ascending: false })
-  
-  if (error) throw error
-  return data
+export async function createClientProfile(
+  userId: string,
+  company_name?: string,
+  company_type?: string,
+  industry?: string
+) {
+  const { data, error } = await supabase
+    .from('client_profiles')
+    .insert({
+      user_id: userId,
+      company_name,
+      company_type,
+      industry,
+    })
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data as ClientProfile;
 }
 
-export async function getPortfolioProjectsByArchitect(
-  supabaseClient: any,
-  architectId: string
+export async function getClientProfile(userId: string) {
+  const { data, error } = await supabase
+    .from('client_profiles')
+    .select('*, user:users(*)')
+    .eq('user_id', userId)
+    .single();
+
+  if (error) throw error;
+  return data as ClientProfile;
+}
+
+// ============================================================================
+// STUDENT PROFILE HELPERS
+// ============================================================================
+
+export async function createStudentProfile(
+  userId: string,
+  university?: string,
+  degree?: string,
+  graduation_year?: number,
+  interests: string[] = []
 ) {
-  const { data, error } = await supabaseClient
-    .from('portfolio_projects')
+  const { data, error } = await supabase
+    .from('student_profiles')
+    .insert({
+      user_id: userId,
+      university,
+      degree,
+      graduation_year,
+      interests,
+    })
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data as StudentProfile;
+}
+
+// ============================================================================
+// HR PROFILE HELPERS
+// ============================================================================
+
+export async function createHRProfile(
+  userId: string,
+  company_name: string,
+  department?: string
+) {
+  const { data, error } = await supabase
+    .from('hr_profiles')
+    .insert({
+      user_id: userId,
+      company_name,
+      department,
+    })
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data as HRProfile;
+}
+
+// ============================================================================
+// PORTFOLIO HELPERS
+// ============================================================================
+
+export async function createPortfolioItem(
+  architectId: string,
+  title: string,
+  description: string,
+  category: string,
+  images: string[],
+  tags: string[] = []
+) {
+  const { data, error } = await supabase
+    .from('portfolios')
+    .insert({
+      architect_id: architectId,
+      title,
+      description,
+      category,
+      images,
+      tags,
+    })
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data as Portfolio;
+}
+
+export async function getArchitectPortfolio(architectId: string) {
+  const { data, error } = await supabase
+    .from('portfolios')
     .select('*')
     .eq('architect_id', architectId)
-    .order('created_at', { ascending: false })
-  
-  if (error) throw error
-  return data
+    .order('featured', { ascending: false })
+    .order('created_at', { ascending: false });
+
+  if (error) throw error;
+  return data as Portfolio[];
 }
 
-export async function getPortfolioProjectById(supabaseClient: any, id: string) {
+export async function getPortfolioProjectsByArchitect(supabaseClient: any, architectId: string) {
   const { data, error } = await supabaseClient
-    .from('portfolio_projects')
+    .from('portfolios')
     .select('*')
-    .eq('id', id)
-    .single()
-  
-  if (error) throw error
-  return data
-}
+    .eq('architect_id', architectId)
+    .order('featured', { ascending: false })
+    .order('created_at', { ascending: false });
 
-export async function addPortfolioProject(project: {
-  title: string
-  architect_id: string
-  category?: string
-  location?: string
-  year?: number
-  image_url?: string
-  description?: string
-}) {
-  const { data, error } = await supabase
-    .from('portfolio_projects')
-    .insert(project)
-    .select()
-    .single()
-
-  if (error) throw error
-  return data
-}
-
-export async function deletePortfolioProject(projectId: string) {
-  const { error } = await supabase
-    .from('portfolio_projects')
-    .delete()
-    .eq('id', projectId)
-
-  if (error) throw error
+  if (error) throw error;
+  return data as Portfolio[];
 }
 
 // ============================================================================
-// IMAGE UPLOAD (Supabase Storage)
+// BLOG POST HELPERS
 // ============================================================================
-
-export async function uploadImage(
-  bucket: string,
-  path: string,
-  file: File
-): Promise<string> {
-  const { data, error } = await supabase.storage
-    .from(bucket)
-    .upload(path, file, {
-      cacheControl: '3600',
-      upsert: true,
-    })
-
-  if (error) throw error
-
-  const { data: urlData } = supabase.storage
-    .from(bucket)
-    .getPublicUrl(data.path)
-
-  return urlData.publicUrl
-}
-
-export async function uploadPortfolioImage(file: File, userId: string): Promise<string> {
-  const ext = file.name.split('.').pop()
-  const fileName = `${userId}/${Date.now()}.${ext}`
-  return uploadImage('portfolio-images', fileName, file)
-}
-
-export async function uploadAvatarImage(file: File, userId: string): Promise<string> {
-  const ext = file.name.split('.').pop()
-  const fileName = `${userId}/avatar.${ext}`
-  return uploadImage('avatars', fileName, file)
-}
-
-// ============================================================================
-// BLOG QUERIES
-// ============================================================================
-
-export async function getBlogPosts(
-  supabaseClient: any,
-  options?: { status?: string; category?: string; limit?: number }
-) {
-  let query = supabaseClient
-    .from('blog_posts')
-    .select('*')
-    .order('created_at', { ascending: false })
-  
-  if (options?.status) {
-    query = query.eq('status', options.status)
-  } else {
-    query = query.eq('status', 'approved')
-  }
-  
-  if (options?.category) {
-    query = query.eq('category', options.category)
-  }
-  
-  if (options?.limit) {
-    query = query.limit(options.limit)
-  }
-  
-  const { data, error } = await query
-  if (error) throw error
-  return data
-}
-
-export async function getBlogPostById(supabaseClient: any, id: string) {
-  const { data, error } = await supabaseClient
-    .from('blog_posts')
-    .select(`
-      *,
-      blog_comments(*)
-    `)
-    .eq('id', id)
-    .single()
-  
-  if (error) throw error
-  return data
-}
 
 export async function createBlogPost(
-  supabaseClient: any,
-  post: {
-    title: string
-    excerpt: string
-    content: string
-    category: string
-    image_url?: string
-  }
+  authorId: string,
+  title: string,
+  slug: string,
+  content: string,
+  category: string,
+  tags: string[] = [],
+  featured_image?: string,
+  excerpt?: string
 ) {
-  const {
-    data: { user },
-  } = await supabaseClient.auth.getUser()
-  
-  if (!user) throw new Error('User not authenticated')
-  
-  const { data, error } = await supabaseClient
+  const { data, error } = await supabase
     .from('blog_posts')
     .insert({
-      user_id: user.id,
-      ...post,
-      status: 'pending',
-      published_date: null,
+      author_id: authorId,
+      title,
+      slug,
+      content,
+      category,
+      tags,
+      featured_image,
+      excerpt,
+      status: 'published',
+      published_at: new Date().toISOString(),
     })
     .select()
-    .single()
-  
-  if (error) throw error
-  return data
+    .single();
+
+  if (error) throw error;
+  return data as BlogPost;
 }
 
-export async function updateBlogPostStatus(
-  supabaseClient: any,
-  id: string,
-  status: string
-) {
-  const { data, error } = await supabaseClient
+export async function getPublishedBlogPosts(limit = 10) {
+  const { data, error } = await supabase
     .from('blog_posts')
-    .update({ status })
-    .eq('id', id)
-    .select()
-    .single()
-  
-  if (error) throw error
-  return data
+    .select('*, author:users(*)')
+    .eq('status', 'published')
+    .order('published_at', { ascending: false })
+    .limit(limit);
+
+  if (error) throw error;
+  return data as BlogPost[];
+}
+
+export async function getBlogPostBySlug(slug: string) {
+  const { data, error } = await supabase
+    .from('blog_posts')
+    .select('*, author:users(*), comments:blog_comments(*)')
+    .eq('slug', slug)
+    .eq('status', 'published')
+    .single();
+
+  if (error) throw error;
+  return data as BlogPost;
 }
 
 export async function addBlogComment(
-  supabaseClient: any,
-  blogPostId: string,
-  comment: { author: string; content: string }
+  postId: string,
+  authorId: string,
+  content: string
 ) {
-  const { data, error } = await supabaseClient
+  const { data, error } = await supabase
     .from('blog_comments')
     .insert({
-      blog_post_id: blogPostId,
-      ...comment,
+      post_id: postId,
+      author_id: authorId,
+      content,
     })
     .select()
-    .single()
-  
-  if (error) throw error
-  return data
+    .single();
+
+  if (error) throw error;
+  return data as BlogComment;
 }
 
 // ============================================================================
-// PROJECT BID QUERIES
+// PROJECT HELPERS
 // ============================================================================
 
-export async function getProjectBids(supabaseClient: any, userId?: string) {
-  let query = supabaseClient.from('project_bids').select('*')
-  
-  if (userId) {
-    query = query.eq('user_id', userId)
-  }
-  
-  const { data, error } = await query.order('posted_date', { ascending: false })
-  if (error) throw error
-  return data
-}
-
-export async function getProjectBidById(supabaseClient: any, id: string) {
-  const { data, error } = await supabaseClient
-    .from('project_bids')
-    .select(`
-      *,
-      architect_bids(*)
-    `)
-    .eq('id', id)
-    .single()
-  
-  if (error) throw error
-  return data
-}
-
-export async function createProjectBid(
-  supabaseClient: any,
-  bid: {
-    project_title: string
-    project_type: string
-    client_name?: string
-    budget_min: number
-    budget_max: number
-    timeline_min: number
-    timeline_max: number
-    timeline_unit: 'weeks' | 'months' | 'years'
-    location: string
-    description: string
-    deadline: string
-  }
+export async function createProject(
+  clientId: string,
+  userId: string,
+  title: string,
+  description: string,
+  category: string,
+  budget_min?: number,
+  budget_max?: number,
+  specialties_required: string[] = [],
+  timeline?: string,
+  deadline?: string
 ) {
-  const {
-    data: { user },
-  } = await supabaseClient.auth.getUser()
-  
-  if (!user) throw new Error('User not authenticated')
-  
-  const { data, error } = await supabaseClient
-    .from('project_bids')
+  const { data, error } = await supabase
+    .from('projects')
     .insert({
-      user_id: user.id,
-      ...bid,
+      client_id: clientId,
+      posted_by_user_id: userId,
+      title,
+      description,
+      category,
+      budget_min,
+      budget_max,
+      budget_type: 'fixed',
+      specialties_required,
+      timeline,
+      deadline,
+      status: 'open',
     })
     .select()
-    .single()
-  
-  if (error) throw error
-  return data
+    .single();
+
+  if (error) throw error;
+  return data as Project;
 }
 
-// ============================================================================
-// ARCHITECT BID QUERIES
-// ============================================================================
+export async function getOpenProjects(filters?: ProjectSearchFilters, limit = 20) {
+  let query = supabase
+    .from('projects')
+    .select('*, client:client_profiles(*), posted_by:users(*)')
+    .eq('status', 'open');
 
-export async function getArchitectBidsForProject(
-  supabaseClient: any,
-  projectBidId: string
-) {
-  const { data, error } = await supabaseClient
-    .from('architect_bids')
-    .select(`
-      *,
-      architects(*)
-    `)
-    .eq('project_bid_id', projectBidId)
-    .order('submitted_date', { ascending: false })
-  
-  if (error) throw error
-  return data
-}
-
-export async function submitArchitectBid(
-  supabaseClient: any,
-  bid: {
-    project_bid_id: string
-    proposed_budget: string
-    proposed_timeline: string
-    message: string
+  if (filters?.category) {
+    query = query.eq('category', filters.category);
   }
-) {
-  const {
-    data: { user },
-  } = await supabaseClient.auth.getUser()
-  
-  if (!user) throw new Error('User not authenticated')
-  
-  const { data: architect } = await supabaseClient
-    .from('architects')
-    .select('id')
-    .eq('user_id', user.id)
-    .single()
-  
-  if (!architect) throw new Error('Architect profile not found')
-  
-  const { data, error } = await supabaseClient
-    .from('architect_bids')
-    .insert({
-      architect_id: architect.id,
-      ...bid,
-    })
-    .select()
-    .single()
-  
-  if (error) throw error
-  return data
-}
 
-// ============================================================================
-// REVIEW QUERIES
-// ============================================================================
+  if (filters?.min_budget) {
+    query = query.gte('budget_max', filters.min_budget);
+  }
 
-export async function getArchitectReviews(supabaseClient: any, architectId: string) {
-  const { data, error } = await supabaseClient
-    .from('reviews')
-    .select('*')
-    .eq('architect_id', architectId)
+  if (filters?.max_budget) {
+    query = query.lte('budget_min', filters.max_budget);
+  }
+
+  const { data, error } = await query
     .order('created_at', { ascending: false })
-  
-  if (error) throw error
-  return data
+    .limit(limit);
+
+  if (error) throw error;
+  return data as Project[];
 }
 
-export async function createReview(
-  supabaseClient: any,
-  review: {
-    architect_id: string
-    rating: number
-    title: string
-    content: string
-    project_bid_id?: string
-  }
+export async function getProjectById(projectId: string) {
+  const { data, error } = await supabase
+    .from('projects')
+    .select('*, client:client_profiles(*), posted_by:users(*), bids:bids(*)')
+    .eq('id', projectId)
+    .single();
+
+  if (error) throw error;
+  return data as Project;
+}
+
+// ============================================================================
+// BID HELPERS
+// ============================================================================
+
+export async function submitBid(
+  projectId: string,
+  architectId: string,
+  bid_amount: number,
+  proposal: string,
+  timeline_days?: number
 ) {
-  const {
-    data: { user },
-  } = await supabaseClient.auth.getUser()
-  
-  if (!user) throw new Error('User not authenticated')
-  
-  const { data, error } = await supabaseClient
-    .from('reviews')
+  const { data, error } = await supabase
+    .from('bids')
     .insert({
-      client_id: user.id,
-      ...review,
+      project_id: projectId,
+      architect_id: architectId,
+      bid_amount,
+      proposal,
+      timeline_days,
+      status: 'pending',
     })
     .select()
-    .single()
-  
-  if (error) throw error
-  return data
+    .single();
+
+  if (error) throw error;
+  return data as Bid;
+}
+
+export async function getProjectBids(projectId: string) {
+  const { data, error } = await supabase
+    .from('bids')
+    .select('*, architect:architect_profiles(*)')
+    .eq('project_id', projectId)
+    .order('created_at', { ascending: false });
+
+  if (error) throw error;
+  return data as Bid[];
+}
+
+export async function getArchitectBids(architectId: string) {
+  const { data, error } = await supabase
+    .from('bids')
+    .select('*, project:projects(*)')
+    .eq('architect_id', architectId)
+    .order('created_at', { ascending: false });
+
+  if (error) throw error;
+  return data as Bid[];
 }
 
 // ============================================================================
-// MESSAGING QUERIES
+// MESSAGE HELPERS
 // ============================================================================
 
-export async function getConversations(supabaseClient: any, userId: string) {
-  const { data, error } = await supabaseClient
-    .from('conversations')
-    .select('*')
-    .contains('participant_ids', [userId])
-    .order('updated_at', { ascending: false })
-  
-  if (error) throw error
-  return data
+export async function sendMessage(
+  senderId: string,
+  recipientId: string,
+  content: string
+) {
+  const { data, error } = await supabase
+    .from('messages')
+    .insert({
+      sender_id: senderId,
+      recipient_id: recipientId,
+      content,
+    })
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data as Message;
 }
 
 export async function getConversationMessages(
-  supabaseClient: any,
-  conversationId: string
+  userId1: string,
+  userId2: string,
+  limit = 50
 ) {
-  const { data, error } = await supabaseClient
-    .from('direct_messages')
-    .select('*')
-    .eq('conversation_id', conversationId)
-    .order('created_at', { ascending: true })
-  
-  if (error) throw error
-  return data
+  const { data, error } = await supabase
+    .from('messages')
+    .select('*, sender:users(*), recipient:users(*)')
+    .or(`and(sender_id.eq.${userId1},recipient_id.eq.${userId2}),and(sender_id.eq.${userId2},recipient_id.eq.${userId1})`)
+    .order('created_at', { ascending: false })
+    .limit(limit);
+
+  if (error) throw error;
+  return data as Message[];
 }
 
-export async function sendDirectMessage(
-  supabaseClient: any,
-  message: {
-    conversation_id: string
-    recipient_id: string
-    content: string
-  }
+// ============================================================================
+// REVIEW HELPERS
+// ============================================================================
+
+export async function submitReview(
+  reviewerId: string,
+  architectId: string,
+  rating: number,
+  comment?: string,
+  projectId?: string
 ) {
-  const {
-    data: { user },
-  } = await supabaseClient.auth.getUser()
-  
-  if (!user) throw new Error('User not authenticated')
-  
-  const { data, error } = await supabaseClient
-    .from('direct_messages')
+  const { data, error } = await supabase
+    .from('reviews')
     .insert({
-      sender_id: user.id,
-      ...message,
+      reviewer_id: reviewerId,
+      architect_id: architectId,
+      rating,
+      comment,
+      project_id: projectId,
     })
     .select()
-    .single()
-  
-  if (error) throw error
-  return data
+    .single();
+
+  if (error) throw error;
+  return data as Review;
 }
 
-// ============================================================================
-// CONTACT FORM QUERIES
-// ============================================================================
+export async function getArchitectReviews(architectId: string) {
+  const { data, error } = await supabase
+    .from('reviews')
+    .select('*, reviewer:users(*)')
+    .eq('architect_id', architectId)
+    .order('created_at', { ascending: false });
 
-export async function submitContactMessage(
-  supabaseClient: any,
-  message: {
-    sender_name: string
-    sender_email: string
-    subject: string
-    message: string
-  }
-) {
-  const { data, error } = await supabaseClient
-    .from('contact_messages')
-    .insert(message)
-    .select()
-    .single()
-  
-  if (error) throw error
-  return data
-}
-
-// ============================================================================
-// LIKES AND ENGAGEMENT
-// ============================================================================
-
-export async function incrementProjectLikes(supabaseClient: any, projectId: string) {
-  const { data: project } = await supabaseClient
-    .from('portfolio_projects')
-    .select('likes')
-    .eq('id', projectId)
-    .single()
-  
-  const newLikes = (project?.likes || 0) + 1
-  
-  const { data, error } = await supabaseClient
-    .from('portfolio_projects')
-    .update({ likes: newLikes })
-    .eq('id', projectId)
-    .select()
-    .single()
-  
-  if (error) throw error
-  return data
-}
-
-export async function incrementBlogLikes(supabaseClient: any, postId: string) {
-  const { data: post } = await supabaseClient
-    .from('blog_posts')
-    .select('likes')
-    .eq('id', postId)
-    .single()
-  
-  const newLikes = (post?.likes || 0) + 1
-  
-  const { data, error } = await supabaseClient
-    .from('blog_posts')
-    .update({ likes: newLikes })
-    .eq('id', postId)
-    .select()
-    .single()
-  
-  if (error) throw error
-  return data
-}
-
-// ============================================================================
-// VACANCY QUERIES
-// ============================================================================
-
-export async function getVacancies(supabaseClient: any, status = 'approved') {
-  const { data, error } = await supabaseClient
-    .from('vacancies')
-    .select('*')
-    .eq('status', status)
-    .order('created_at', { ascending: false })
-
-  if (error) throw error
-  return data
-}
-
-export async function getVacancyById(supabaseClient: any, id: string) {
-  const { data, error } = await supabaseClient
-    .from('vacancies')
-    .select('*')
-    .eq('id', id)
-    .single()
-
-  if (error) throw error
-  return data
-}
-
-export async function createVacancy(supabaseClient: any, vacancy: {
-  user_id: string
-  title: string
-  company: string
-  location?: string
-  salary_min?: number
-  salary_max?: number
-  job_type: string
-  description: string
-  requirements?: string
-  apply_url?: string
-  apply_email?: string
-}) {
-  const { data, error } = await supabaseClient
-    .from('vacancies')
-    .insert({ ...vacancy, status: 'pending' })
-    .select()
-    .single()
-
-  if (error) throw error
-  return data
-}
-
-export async function updateVacancyStatus(supabaseClient: any, id: string, status: string) {
-  const { data, error } = await supabaseClient
-    .from('vacancies')
-    .update({ status })
-    .eq('id', id)
-    .select()
-    .single()
-
-  if (error) throw error
-  return data
+  if (error) throw error;
+  return data as Review[];
 }
