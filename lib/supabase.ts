@@ -213,6 +213,17 @@ export async function getFeaturedArchitects(limit = 6) {
   return data as ArchitectProfile[];
 }
 
+export async function getArchitectById(supabaseClient: any, architectId: string) {
+  const { data, error } = await supabaseClient
+    .from('architect_profiles')
+    .select('*, user:users(*)')
+    .eq('user_id', architectId)
+    .single();
+
+  if (error) throw error;
+  return data as ArchitectProfile;
+}
+
 // ============================================================================
 // CLIENT PROFILE HELPERS
 // ============================================================================
@@ -330,6 +341,18 @@ export async function createPortfolioItem(
 
 export async function getArchitectPortfolio(architectId: string) {
   const { data, error } = await supabase
+    .from('portfolios')
+    .select('*')
+    .eq('architect_id', architectId)
+    .order('featured', { ascending: false })
+    .order('created_at', { ascending: false });
+
+  if (error) throw error;
+  return data as Portfolio[];
+}
+
+export async function getPortfolioProjectsByArchitect(supabaseClient: any, architectId: string) {
+  const { data, error } = await supabaseClient
     .from('portfolios')
     .select('*')
     .eq('architect_id', architectId)

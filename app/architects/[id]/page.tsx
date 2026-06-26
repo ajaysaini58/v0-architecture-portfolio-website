@@ -28,7 +28,7 @@ export default function ArchitectPage() {
         const [arch, projs, revs] = await Promise.all([
           getArchitectById(supabase, id),
           getPortfolioProjectsByArchitect(supabase, id),
-          getArchitectReviews(supabase, id)
+          getArchitectReviews(id)
         ])
         setArchitect(arch)
         setProjects(projs)
